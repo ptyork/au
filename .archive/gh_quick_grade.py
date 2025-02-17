@@ -3,14 +3,13 @@
 from typing import List
 
 import argparse
-import csv
 import logging
 import os
 from pathlib import Path
 from pprint import pformat
 
 from gh_classroom_types import Course, Assignment
-from gh_classroom_util import get_course, get_assignment, choose_assignment, print_course, print_assignment
+from gh_classroom_util import get_course, get_assignment, choose_assignment
 from terminal_util import draw_double_line, draw_single_line
 from csv_dir_map import get_dir_map
 
@@ -87,8 +86,8 @@ else:
 draw_single_line()
 
 if assignment:
-    print_course(course)
-    print_assignment(assignment)
+    print(course)
+    print(assignment)
 else:
     logger.error("Unable to find the requested assignment. Functionality will be limited.")
 

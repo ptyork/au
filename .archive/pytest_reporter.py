@@ -1,48 +1,32 @@
 import pytest
+from pytest import TestReport
 
-from pytest_data import Results, Test
+from pytest_data import Results, NodeId, TestClass, Test, SubTest
 
 class PytestResultsReporter:
     def __init__(self):
         self.results = Results()
-        self.tests = {}
         self.last_err = None
         self.config = None
 
-    def pytest_configure(self, config):
-        config.addinivalue_line("markers", "task(taskno): this marks the exercise task number.")
-        self.config = config
-
-    def pytest_collection_modifyitems(self, session, config, items):
-        """
-        Sorts the tests in definition order & extracts task_id
-        """
-        for item in items:
-            test_id = item.nodeid
-            name = '.'.join(test_id.split("::")[1:])
-
-            for mark in item.iter_markers(name='task'):
-                self.tests[name] = Test(name=name, task_id=mark.kwargs['taskno'])
-
-
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport):
         """
         Process a test setup / call / teardown report.
         """
 
-        name = report.head_line if report.head_line else ".".join(report.nodeid.split("::")[1:])
-        name = report.nodeid
-        if name not in self.tests:
-            self.tests[name] = Test(name)
-
-        state = self.tests[name]
-
-        # Store duration
-        state.duration = report.duration
-
         # ignore successful setup and teardown stages
         if report.passed and report.when != "call":
             return
+
+        test = self.results.get_test(report.nodeid)
+        state = test
+        sub_name = SubTest.parse_head_line(report.head_line)
+        if sub_name:
+            sub_test = test.get_subtest(sub_name)
+            state = sub_test
+
+        # Store duration
+        state.duration = report.duration
 
         # Update tests that have already failed with capstdout and return.
         if not state.is_passing():
@@ -53,6 +37,7 @@ class PytestResultsReporter:
         # Record captured relevant stdout content for passed tests.
         if report.capstdout:
             state.output = report.capstdout
+
 
         # Handle details of test failure
         if report.failed:
@@ -70,20 +55,6 @@ class PytestResultsReporter:
             else:
                 state.fail(message)
 
-        # Looks up test_ids from parent when the test is a subtest.
-        if state.task_id == 0 and 'variation' in state.name:
-            parent_test_name = state.name.split(' ')[0]
-            parent_task_id = self.tests[parent_test_name].task_id
-            state.task_id = parent_task_id
-
-
-            # Changes status of parent to fail if any of the subtests fail.
-            if state.fail:
-                self.tests[parent_test_name].fail(
-                    message="One or more variations of this test failed. Details can be found under each [variant#]."
-                )
-                self.tests[parent_test_name].test_code = state.test_code
-
 
     def pytest_sessionfinish(self, session, exitstatus):
         """
@@ -92,20 +63,17 @@ class PytestResultsReporter:
         exitcode = pytest.ExitCode(int(exitstatus))
 
         # at least one of the tests has failed
-        if exitcode is pytest.ExitCode.TESTS_FAILED:
-            self.results.fail()
-
-        # an error has been encountered
-        elif exitcode is not pytest.ExitCode.OK:
+        if (
+            exitcode is not pytest.ExitCode.TESTS_FAILED and 
+            exitcode is not pytest.ExitCode.OK
+        ):
             message = None
             if self.last_err is not None:
                 message = self.last_err
             else:
                 message = f"Unexpected ExitCode.{exitcode.name}: check logs for details"
             self.results.error(message)
-
-        for test in self.tests.values():
-            self.results.add(test)
+        self.results.update()
 
     def pytest_exception_interact(self, node, call, report):
         """

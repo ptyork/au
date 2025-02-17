@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from typing import Tuple
+from typing import Tuple, List
 
 import subprocess
 
 import re
 
-from gh_classroom_types import Course, Assignment
+from gh_classroom_types import Course, Assignment, AcceptedAssignment
 from datetime_util import parse_github_datetime, get_friendly_local_datetime
 from terminal_util import clean_ansi, draw_single_line, get_choice
 
@@ -141,24 +141,59 @@ def get_assignment(assignment_id: int = None) -> Tuple[Course, Assignment]:
 
     return c, a
 
+###############################################################################
+# get_accepted_assignments
+###############################################################################
 
-def print_course(course: Course) -> None:
-    print(f"Course Name :       {course.name}")
-    print(f"Course ID :         {course.id}")
+def get_accepted_assignments(assignment: Assignment) -> List[AcceptedAssignment]:
+    cmd = f'gh classroom accepted-assignments -a {assignment.id}'
+    result = subprocess.run(cmd.split(), capture_output=True, text=True)
 
+    lines = result.stdout.splitlines()
 
-def print_assignment(assignment: Assignment) -> None:
-    print(f"Assignment Title :  {assignment.title}")
-    print(f"Assignment ID :     {assignment.id}")
-    print(f"Deadline :          {get_friendly_local_datetime(assignment.deadline)}")
+    header_line = lines.pop(0).lower()
+    while lines and not header_line.startswith('id\t'):
+        header_line = lines.pop(0).lower()
+
+    # Again these are tab separated, so we split on tabs and find the right index
+
+    col_names = header_line.split('\t')
+
+    try:
+        id_idx = col_names.index('id')
+        github_id_idx = col_names.index('student')
+        repo_url_idx = col_names.index('repository')
+        commit_count_idx = col_names.index('commit count')
+    except:
+        print("Unable to parse gh classroom results")
+        exit(1)
+
+    accepted_assignments: List[AcceptedAssignment] = []
+
+    for line in lines:
+        cols = line.split("\t")
+        id = int(cols[id_idx])
+        github_id = cols[github_id_idx].strip()
+        repo_url = cols[repo_url_idx].strip()
+        commit_count = int(cols[commit_count_idx])
+        accepted_assignments.append(AcceptedAssignment(id, github_id, repo_url, commit_count))
+
+    accepted_assignments.sort(key=lambda a: a.github_id)
+    return accepted_assignments
 
 
 if __name__ == "__main__":
     c = get_course()
-    a = get_assignment(c)
+    a = choose_assignment(c)
 
-    print_course(c)
-    print_assignment(a)
+    print(c)
+    print(a)
+
+    AcceptedAssignment.print_header()
+
+    aa_list = get_accepted_assignments(a)
+    for aa in aa_list:
+        print(aa)
 
     # draw_single_line()
 

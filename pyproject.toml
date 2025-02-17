@@ -1,0 +1,29 @@
+[project]
+name = "au-tools"
+version = "0.25.2"
+description = "AU CLASSROOM AUTOMATION TOOLS"
+authors = [
+    { name = "Paul York", email = "paul@yorkfamily.com" }
+]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "pytest (>=8.3.4,<9.0.0)",
+    "pytest-subtests (>=0.14.1,<0.15.0)",
+    "pylint (>=3.3.4,<4.0.0)",
+    "gitpython (>=3.1.44,<4.0.0)",
+    "yaspin (>=3.1.0,<4.0.0)",
+    "click (>=8.1.8,<9.0.0)"
+]
+
+[tool.poetry]
+packages = [
+    { include = "au" },
+]
+
+[tool.poetry.scripts]
+au = 'au.cli:main'
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -98,16 +98,18 @@ def run_tests(student_dir_path: Path, assignment: Assignment = None, student_nam
         # run the tests and report
         pytest_reporter = PytestResultsReporter()
         pytest.main(
-            ['-s', '--tb=no', '-q','--import-mode=importlib'],
+            # ['-s', '--tb=no', '-q','--import-mode=importlib'],
+            ['-s', '--tb=no', '-q'],
             plugins=[pytest_reporter]
         )
-        
+
         pytest_pct = round(pytest_reporter.results.pass_pct, 3)
         student_results['pytest_pct'] = pytest_pct
         if pytest_pct < 1:
             student_results['pytest_results'] = pytest_reporter.results.as_dict()
 
     except Exception as ex:
+        print("EXCEPTION:", ex)
         student_results['pytest_exception'] = ex
 
     print("done with pytest")
