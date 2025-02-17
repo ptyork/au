@@ -7,8 +7,8 @@ from pathlib import Path
 from pprint import pformat
 from yaspin import yaspin
 
-from au.lib.github.classroom_types import Course, Assignment
-from au.lib.github.classroom_util import get_course, get_assignment, choose_assignment
+from au.lib.github.classroom_types import Classroom, Assignment
+from au.lib.github.classroom_util import choose_classroom, get_assignment, choose_assignment
 from au.lib.github.github_util import get_git_dirs
 from au.lib.common.terminal_util import draw_double_line, draw_single_line
 from au.lib.common.csv_util import dict_from_csv
@@ -29,7 +29,7 @@ logger.setLevel(_base_logging_level)
 @click.option("-r", "--roster", type=click.File(),
               help="provide the classroom roster to retrieve actual student names")
 @click.option("-a", "--assignment-id", type=int,
-              help="the integer course id for the assignment; will prompt for the course and assignment if not provided")
+              help="the integer classroom id for the assignment; will prompt for the classroom and assignment if not provided")
 @click.option("-se", "--skip_eval", is_flag=True, help="set to bypass running the evaluations")
 @click.option("-sf", "--skip_feedback", is_flag=True, help="set to bypass generating feedback")
 @click.option("--feedback-filename", type=str, default=DEFAULT_FEEDBACK_FILE_NAME,
@@ -82,16 +82,14 @@ def quick_grade(root_dir: Path,
     ###############################################################################
 
     if assignment_id:
-        course, assignment = get_assignment(assignment_id)
+        assignment = get_assignment(assignment_id)
     else:
-        course: Course = get_course()
-        if course:
-            assignment: Assignment = choose_assignment(course)
+        classroom: Classroom = choose_classroom()
+        assignment: Assignment = choose_assignment(classroom)
 
     draw_single_line()
 
     if assignment:
-        print(course)
         print(assignment)
     else:
         logger.error("Unable to find the requested assignment. Functionality will be limited.")

@@ -19,8 +19,8 @@ from .pytest_reporter import PytestResultsReporter
 from .scoring import get_summary
 
 from au.lib.common.terminal_util import draw_single_line
-from au.lib.github.classroom_types import Course, Assignment
-from au.lib.github.classroom_util import get_course, get_assignment, choose_assignment
+from au.lib.github.classroom_types import Classroom, Assignment
+from au.lib.github.classroom_util import choose_classroom, get_assignment, choose_assignment
 from au.lib.common.datetime_util import get_friendly_timedelta
 
 import logging
@@ -52,7 +52,7 @@ def retrieve_student_results(student_dir: Path) -> Dict:
 @click.option("-s", "--student-name", type=str,
               help="the name of the student for the feedback report; will default to the GitHub username if not provided")
 @click.option("-a", "--assignment-id", type=int,
-              help="the integer course id for the assignment; will prompt for the course and assignment if not provided")
+              help="the integer classroom id for the assignment; will prompt for the classroom and assignment if not provided")
 @click.option("-n", "--no-summary", is_flag=True, help="set to not display any summary tables")
 @click.option("-d", "--debug", is_flag=True, help="set to enable detailed output")
 @click.option("-q", "--quiet", is_flag=True, help="set to reduce output to errors only")
@@ -72,17 +72,15 @@ def eval_assignment_cmd(student_dir: Path,
         logging.getLogger().setLevel(logging.WARNING)
 
     if assignment_id:
-        course, assignment = get_assignment(assignment_id)
+        assignment = get_assignment(assignment_id)
     else:
-        course: Course = get_course()
-        if course:
-            assignment: Assignment = choose_assignment(course)
+        classroom: Classroom = choose_classroom()
+        assignment: Assignment = choose_assignment(classroom)
 
     if not assignment:
         logger.warning("Unable to find the requested assignment. Functionality will be limited.")
 
     if assignment and not no_summary:
-        print(course)
         print(assignment)
 
     student_results = eval_assignment(student_dir, student_name, assignment)
