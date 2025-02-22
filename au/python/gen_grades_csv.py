@@ -5,7 +5,7 @@ import csv
 import os
 from pathlib import Path
 
-from au.lib.common.datetime_util import get_friendly_local_datetime
+from au.lib.common.datetime import get_friendly_local_datetime
 from .gen_feedback import get_feedback_file_score, DEFAULT_FEEDBACK_FILE_NAME
 from .eval_assignment import retrieve_student_results, RESULTS_FILE_NAME
 

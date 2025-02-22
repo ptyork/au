@@ -1,8 +1,9 @@
 import click
-from au.lib.click.SubdirGroup import SubdirGroup
+from au.lib.click.AliasedGroup import AliasedGroup
 
+# @click.command(cls=SubdirGroup, file=__file__, module=__package__)
 @click.version_option(prog_name='au-utils')
-@click.command(cls=SubdirGroup, file=__file__, module=__package__)
+@click.group(cls=AliasedGroup)
 def main():
     """
     AU CLASSROOM AUTOMATION TOOLS
@@ -12,7 +13,17 @@ def main():
     """
     pass
 
-# @main.command()
+from .classroom.cli import classroom
+main.add_command(classroom)
+
+from .python.cli import python
+main.add_command(python)
+
+from .sql.cli import sql
+main.add_command(sql)
+
+
+# @au.command()
 # @click.argument('name', type=str)
 # def embed(name: str):
 #     """
@@ -22,7 +33,7 @@ def main():
 #     """
 #     click.echo("Testing a command embedded directly in cli.py")
 
-# @main.command()
+# @au.command()
 # @click.argument('name', type=str)
 # def embed2(name: str):
 #     """

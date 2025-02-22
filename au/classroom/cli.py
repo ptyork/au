@@ -2,21 +2,29 @@ import click
 from yaspin import yaspin
 
 from au.lib.click.AliasedGroup import AliasedGroup
-from au.lib.github.classroom_util import get_classroom, choose_classroom, get_assignment, choose_assignment, get_accepted_assignments
-from au.lib.github.classroom_types import AcceptedAssignment
+from au.lib.classroom import get_classroom, choose_classroom, get_assignment, choose_assignment, get_accepted_assignments
+from au.lib.classroom import AcceptedAssignment
 
 
-@click.group("classroom", short_help="Commands for working with GitHub Classroom.", cls=AliasedGroup)
-def main():
+@click.group(cls=AliasedGroup)
+def classroom():
+    """Commands for working with GitHub Classroom."""
     pass
 
+
 from .rename_roster import rename_roster
-main.add_command(rename_roster)
+classroom.add_command(rename_roster)
 
 from .commit_all import commit_all
-main.add_command(commit_all)
+classroom.add_command(commit_all)
 
-@main.command()
+from .clone_submissions import clone_submissions_cmd
+classroom.add_command(clone_submissions_cmd)
+
+from .late_submissions import late_submissions
+classroom.add_command(late_submissions)
+
+@classroom.command()
 @click.option('-c', '--classroom-id', type=int, help="The ID of the classroom to fetch", default=None)
 def classroom_info(classroom_id: int = None):
     '''
@@ -32,7 +40,7 @@ def classroom_info(classroom_id: int = None):
     if room:
         print(room.as_table())
 
-@main.command()
+@classroom.command()
 @click.option('-c', '--classroom-id', type=int, help="The ID of the classroom to fetch", default=None)
 def open_classroom(classroom_id: int = None):
     '''
@@ -45,7 +53,7 @@ def open_classroom(classroom_id: int = None):
     if room:
         click.launch(room.url)
 
-@main.command()
+@classroom.command()
 @click.option('-a', '--assignment-id', type=int, help="The ID of the assignment to fetch", default=None)
 @click.option('-c', '--classroom-id', type=int, help="If specified, filter assignments by this classroom ID", default=None)
 def assignment_info(classroom_id=None, assignment_id=None):
@@ -62,7 +70,7 @@ def assignment_info(classroom_id=None, assignment_id=None):
     print(a.as_table())
 
 
-@main.command()
+@classroom.command()
 @click.option('-a', '--assignment-id', type=int, help="The ID of the assignment", default=None)
 @click.option('-c', '--classroom-id', type=int, help="If specified, filter assignments by this classroom ID", default=None)
 def show_accepted(classroom_id=None, assignment_id=None):
@@ -80,4 +88,7 @@ def show_accepted(classroom_id=None, assignment_id=None):
         aa_list = get_accepted_assignments(a)
     for aa in aa_list:
         print(aa.as_table_row())
+
+if __name__ == "__main__":
+    classroom()
 

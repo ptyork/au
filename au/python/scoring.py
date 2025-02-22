@@ -1,8 +1,8 @@
 from typing import Dict
 from dataclasses import dataclass
 
-from au.lib.common.datetime_util import get_friendly_local_datetime
-from au.lib.common.terminal_util import get_table, get_md_table_row
+from au.lib.common.datetime import get_friendly_local_datetime
+from au.lib.f_table.f_table import MarkdownStyle, NoBorderScreenStyle, get_table, get_table_row
 
 @dataclass
 class ScoringParams:
@@ -55,7 +55,8 @@ def get_summary(student_results: Dict, scoring_params: ScoringParams = None, get
         summary_values += [
             ['Past Due', past_due]
         ]
-    return get_table(summary_values, col_widths=[25,52], get_markdown=get_markdown, lazy_end=True)
+    style = MarkdownStyle() if get_markdown else NoBorderScreenStyle()
+    return get_table(summary_values, col_defs=['25','52'], lazy_end=True, style=style)
 
 def get_summary_row(label: str, value: str):
-    return get_md_table_row([label, value], col_widths=[25,52], lazy_end=True)
+    return get_table_row([label, value], col_defs=['25','52'], lazy_end=True, style=MarkdownStyle())

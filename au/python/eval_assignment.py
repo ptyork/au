@@ -18,10 +18,10 @@ from yaspin import yaspin
 from .pytest_reporter import PytestResultsReporter
 from .scoring import get_summary
 
-from au.lib.common.terminal_util import draw_single_line
-from au.lib.github.classroom_types import Classroom, Assignment
-from au.lib.github.classroom_util import choose_classroom, get_assignment, choose_assignment
-from au.lib.common.datetime_util import get_friendly_timedelta
+from au.lib.common.terminal import draw_single_line
+from au.lib.classroom import Classroom, Assignment
+from au.lib.classroom import choose_classroom, get_assignment, choose_assignment
+from au.lib.common.datetime import get_friendly_timedelta
 
 import logging
 _base_logging_level = logging.INFO
@@ -149,33 +149,35 @@ def eval_assignment(student_dir: Path,
 
     draw_single_line('pytest')
 
+    pytest_reporter = PytestResultsReporter()
+
+    keep_packages = ['_asyncio',
+                     '_contextvars',
+                     '_elementtree',
+                     '_pytest',
+                     '_ssl',
+                     'asyncio',
+                     'attr',
+                     'cmd',
+                     'code',
+                     'codeop',
+                     'contextvars',
+                     'faulthandler',
+                     'pdb',
+                     'pkgutil',
+                     'pyexpat',
+                     'pytest_metadata',
+                     'pytest_subtests',
+                     'readline',
+                     'ssl',
+                     'unittest',
+                     'xml']
+
+    pretest_modules = [key for key in sys.modules.keys()]
+    pretest_path = sys.path.copy()
+
     try:
         # run the tests and report
-        pytest_reporter = PytestResultsReporter()
-        keep_packages = ['_asyncio',
-                         '_contextvars',
-                         '_elementtree',
-                         '_pytest',
-                         '_ssl',
-                         'asyncio',
-                         'attr',
-                         'cmd',
-                         'code',
-                         'codeop',
-                         'contextvars',
-                         'faulthandler',
-                         'pdb',
-                         'pkgutil',
-                         'pyexpat',
-                         'pytest_metadata',
-                         'pytest_subtests',
-                         'readline',
-                         'ssl',
-                         'unittest',
-                         'xml']
-
-        pretest_modules = [key for key in sys.modules.keys()]
-        
         pytest.main(
             # ['-s', '--tb=no', '-q','--import-mode=importlib'],
             # ['-s', '--tb=no', '-q','--import-mode=append'],
@@ -185,15 +187,6 @@ def eval_assignment(student_dir: Path,
             plugins=[pytest_reporter]
         )
 
-        posttest_modules = [key for key in sys.modules.keys()]
-        for module_name in posttest_modules:
-            if module_name in pretest_modules:
-                continue
-            package = module_name.split('.')[0]
-            if package in keep_packages:
-                continue
-            del sys.modules[module_name]
-
         pytest_pct = round(pytest_reporter.results.pass_pct, 3)
         student_results['pytest_pct'] = pytest_pct
         if pytest_pct < 1:
@@ -202,6 +195,17 @@ def eval_assignment(student_dir: Path,
     except Exception as ex:
         print("EXCEPTION:", ex)
         student_results['pytest_exception'] = ex
+        
+    finally:
+        posttest_modules = [key for key in sys.modules.keys()]
+        for module_name in posttest_modules:
+            if module_name in pretest_modules:
+                continue
+            package = module_name.split('.')[0]
+            if package in keep_packages:
+                continue
+            del sys.modules[module_name]
+        sys.path = pretest_path.copy()
 
     print("done with pytest")
     

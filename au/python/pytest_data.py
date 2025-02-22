@@ -5,10 +5,7 @@ import re
 from typing import List, Dict
 
 class Status(Enum):
-    """
-    The status of a given test or test session.
-    """
-
+    """The status of a given test or test session."""
     PASS = auto()
     FAIL = auto()
     ERROR = auto()

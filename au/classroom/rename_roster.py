@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
 
 import click 
-
+import sys
 from os.path import commonprefix as get_common_prefix
 from io import TextIOWrapper
 import re
 from pathlib import Path
 from pprint import pformat
 
-from au.lib.common.csv_util import dict_from_csv
-from au.lib.common.dir_utils import get_dir_map
+from au.lib.common.csv import dict_from_csv
+from au.lib.common.label_dir import FileType, label_dir
 
 import logging
-_base_logging_level = logging.INFO
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel(_base_logging_level)
+logger = logging.getLogger(__name__)
 
 @click.command()
 @click.argument("root_dir",
                 type=click.Path(exists=True,file_okay=False,dir_okay=True,readable=True,resolve_path=True,path_type=Path))
 @click.argument("roster", type=click.File())
-@click.option("-r", "--remove-prefix", is_flag=True, help="set to remove any prefix string common to all subdirs")
+@click.option("-rp", "--remove-prefix", is_flag=True, help="set to remove any prefix string common to all subdirs")
 @click.option("-d", "--debug", is_flag=True, help="set to enable detailed output")
 @click.option("-q", "--quiet", is_flag=True, help="set to reduce output to errors only")
 @click.option("-p", "--preview", is_flag=True, help="set to show changes without actually making them")
@@ -74,26 +71,28 @@ def rename_roster(root_dir: Path,
     Linux / MacOS Example Usage:
         python3 gh_rename_roster.py ./subfolder/ ./classroom_roster.csv
     '''
+    logging.basicConfig()
 
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     elif quiet:
         logging.getLogger().setLevel(logging.WARNING)
-
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+    
     logger.debug(pformat(root_dir))
     logger.debug(pformat(roster))
 
+    # process roster to get mapping of dirs to students
     try:
         id_student_map = dict_from_csv(roster, 'github_username', 'identifier')
         logger.debug(pformat(id_student_map))
-        dir_student_map = get_dir_map(id_student_map, root_dir)
+        dir_student_map = label_dir(id_student_map, root_dir, FileType.DIRECTORY)
         logger.debug(pformat(id_student_map))
         student_id_map = dict((v,k) for k,v in id_student_map.items())
-        logger.debug(pformat(dir_student_map))
-
     except Exception as ex:
         logger.error(f"Error encountered while processing roster: {ex}")
-        exit(1)
+        sys.exit(1)
 
     common_prefix = get_common_prefix(list(dir_student_map.keys()))
     logger.debug(f"Common Prefix: {common_prefix}")

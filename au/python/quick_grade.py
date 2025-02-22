@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import click
 
 from io import TextIOWrapper
@@ -7,12 +5,12 @@ from pathlib import Path
 from pprint import pformat
 from yaspin import yaspin
 
-from au.lib.github.classroom_types import Classroom, Assignment
-from au.lib.github.classroom_util import choose_classroom, get_assignment, choose_assignment
-from au.lib.github.github_util import get_git_dirs
-from au.lib.common.terminal_util import draw_double_line, draw_single_line
-from au.lib.common.csv_util import dict_from_csv
-from au.lib.common.dir_utils import get_dir_map
+from au.lib.classroom import Classroom, Assignment
+from au.lib.classroom import choose_classroom, get_assignment, choose_assignment
+from au.lib.git import get_git_dirs
+from au.lib.common.terminal import draw_double_line, draw_single_line
+from au.lib.common.csv import dict_from_csv
+from au.lib.common.label_dir import FileType, label_dir
 
 from .eval_assignment import retrieve_student_results, eval_assignment
 from .gen_feedback import gen_feedback, get_summary, ScoringParams, DEFAULT_FEEDBACK_FILE_NAME
@@ -32,7 +30,7 @@ logger.setLevel(_base_logging_level)
               help="the integer classroom id for the assignment; will prompt for the classroom and assignment if not provided")
 @click.option("-se", "--skip_eval", is_flag=True, help="set to bypass running the evaluations")
 @click.option("-sf", "--skip_feedback", is_flag=True, help="set to bypass generating feedback")
-@click.option("--feedback-filename", type=str, default=DEFAULT_FEEDBACK_FILE_NAME,
+@click.option("--feedback-filename", type=str, default=DEFAULT_FEEDBACK_FILE_NAME, show_default=True,
               help="name of markdown file to generate")
 @click.option("-o", "--overwrite-feedback", is_flag = True,
               help="set to override default behavior of not overwriting feedback files")
@@ -68,7 +66,7 @@ def quick_grade(root_dir: Path,
         try:
             id_student_map = dict_from_csv(roster, 'github_username', 'identifier')
             logger.debug(pformat(id_student_map))
-            dir_student_map = get_dir_map(id_student_map, root_dir)
+            dir_student_map = label_dir(id_student_map, root_dir, FileType.DIRECTORY)
             logger.debug(pformat(id_student_map))
 
         except Exception as ex:

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
 import click
+from yaspin import yaspin
 
 from pathlib import Path
-from git import Repo
+from textwrap import fill
+
+from au.lib.common.terminal import get_term_width
+from au.lib.f_table.f_table import BasicScreenStyle, get_table
+from au.lib.git import get_dirty_repos
 
 import logging
-_base_logging_level = logging.INFO
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel(_base_logging_level)
+logger = logging.getLogger(__name__)
 
 @click.command()
 @click.argument("root_dir",
@@ -42,47 +44,72 @@ def commit_all(root_dir: Path,
 
     If the --message argument is not provided, the script will prompt for one.
     '''
+    logging.basicConfig()
 
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     elif quiet:
         logging.getLogger().setLevel(logging.WARNING)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
 
-    for student_dir in root_dir.iterdir():
-        if not student_dir.is_dir():
-            continue
+    skips = []
+    commits = []
+    errors = []
 
-        try:
-            repo = Repo(student_dir)
-        except:
-            print(f"SKIPPING {student_dir}: is not a Git repository")
-            continue
+    with yaspin().aesthetic as spinner:
+        spinner.text="Finding repositories to commit"
+        for repo in get_dirty_repositories(root_dir):
+            if repo.name.startswith('_'):
+                skips.append([repo.name, 'special directory'])
+                continue
 
-        if not repo.is_dirty(untracked_files=True):
-            print(f"SKIPPING {student_dir}: no changes to commit")
-            continue
+            if preview:
+                commits.add([repo.name, "WOULD COMMIT"])
+                continue
 
-        if preview:
-            print(f"WOULD PROCESS {student_dir}")
-            continue
+            try:
+                spinner.text = f"{repo.name}: git pull"
+                repo.git.pull()
 
-        print(f"PROCESSING {student_dir}")
+                spinner.text = f"{repo.name}: git add ."
+                repo.add()
 
-        try:
-            logger.info(f"git pull")
-            repo.git.pull()
+                spinner.text = f"{repo.name}: git commit -m {message}"
+                repo.commit(message)
 
-            logger.info(f"git add .")
-            repo.git.add('.')
+                spinner.text = f"{repo.name}: git push"
+                repo.push()
 
-            logger.info(f"git commit -m {message}")
-            repo.git.commit(f'-m {message}')
+                commits.append([repo.name, "COMMITTED"])
+            except Exception as ex:
+                logger.exception("Error occurred running git command")
+                errors.append([repo.name, str(ex)])
 
-            logger.info(f"git push")
-            repo.git.push()
-        except Exception as ex:
-            logger.exception("Error occurred running git command")
+    # Print a summary
+    if quiet:
+        all_dirs = errors
+    else:
+        all_dirs = commits + skips + errors
+    all_dirs.sort()
 
+    print(get_table(all_dirs, col_defs=['','A'], style=BasicScreenStyle()))
+
+    for dir in all_dirs:
+        print(f' *  {dir[0].name}')
+        print(fill(dir[1], get_term_width(), initial_indent='    '))
+
+    print()
+
+    summary = []
+    summary.append([f'Rood Directory', root_dir])
+    if preview:
+        summary.append([f'Repositories to Commit', len(commits)])
+    else:
+        summary.append([f'Repositories Pushed', len(commits)])
+    summary.append([f'Directories Skipped', len(skips)])
+    summary.append([f'Errors Encountered', len(errors)])
+    print(get_table(summary), style=BasicScreenStyle())
 
 if __name__ == '__main__':
     commit_all()
