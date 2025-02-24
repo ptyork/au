@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from typing import Dict, List
 
 import click
@@ -7,42 +5,36 @@ from yaspin import yaspin
 
 import sys
 import re
-from io import TextIOWrapper
 from pathlib import Path
 from pprint import pformat
 
-from au.lib.common.csv import dict_from_csv
+from au.lib.click import BasePath, AssignmentOptions, RosterOptions, Roster, DebugOptions
 from au.lib.common.terminal import draw_double_line, draw_single_line
-from au.lib.classroom import Assignment, Classroom
-from au.lib.classroom import choose_assignment, choose_classroom, get_accepted_assignments, get_assignment
+from au.lib.classroom import Assignment
+from au.lib.classroom import get_accepted_assignments
 from au.lib.git import GitRepo
+from au.lib.f_table import get_table, BasicScreenStyle
 
 import logging
 logger = logging.getLogger(__name__)
 
 @click.command('clone-submissions')
-@click.argument("root_dir",
-                type=click.Path(exists=True,file_okay=False,dir_okay=True,readable=True,resolve_path=True,path_type=Path))
-@click.option("-a", "--assignment-id", type=int,
-              help="the integer classroom id for the assignment; will prompt for the classroom and assignment if not provided")
-@click.option("--roster", type=click.File(),
-              help="A GitHub Classroom roster file (usually named `classroom_roster.csv`. If provided, directories will be named using the associated student name as well as the student's GitHub login name.")
+@click.argument("root_dir",type=BasePath(), default='.')
+@AssignmentOptions().options
+@RosterOptions().options
 @click.option("-rp","--remove-prefix", is_flag=True, help="set to remove any prefix (slug) string common to all repositories")
 @click.option("-u", "--update", is_flag=True, help="set to pull changes to existing repositories")
-@click.option("-d", "--debug", is_flag=True, help="set to enable detailed output")
-@click.option("-q", "--quiet", is_flag=True, help="set to reduce output to errors only")
 @click.option("-p", "--preview", is_flag=True, help="set to show changes without actually making them")
+@DebugOptions().options
 def clone_submissions_cmd(root_dir: Path,
-                          assignment_id: int = None,
-                          roster: TextIOWrapper = None,
+                          assignment: Assignment = None,
+                          roster: Roster = None,
                           remove_prefix: bool = False,
                           update: bool = False,
-                          debug: bool = False,
-                          quiet: bool = False,
-                          preview: bool = False):
+                          preview: bool = False,
+                          **kwargs):
     '''
-    Clone all student repositories for a GitHub Classroom assignment into
-    ROOT_DIR.
+    Clone all student repositories for an assignment into ROOT_DIR.
 
     \b Required Argument:
       ROOT_DIR
@@ -90,29 +82,9 @@ def clone_submissions_cmd(root_dir: Path,
     '''
     logging.basicConfig()
 
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    elif quiet:
-        logging.getLogger().setLevel(logging.WARNING)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
-
-    # process roster to get mapping of id's to students
-    id_student_map = None
+    login_student_map = None
     if roster:
-        try:
-            id_student_map = dict_from_csv(roster, 'github_username', 'identifier')
-            logger.debug(pformat(id_student_map))
-        except Exception as ex:
-            logger.error(f"Error encountered while processing roster: {ex}")
-            sys.exit(1)
-
-
-    if assignment_id:
-        assignment = get_assignment(assignment_id)
-    else:
-        classroom: Classroom = choose_classroom()
-        assignment: Assignment = choose_assignment(classroom)
+        login_student_map = roster.login_student_map
 
     if not assignment:
         logger.fatal("Unable to find the requested assignment.")
@@ -122,27 +94,27 @@ def clone_submissions_cmd(root_dir: Path,
     print(assignment)
     draw_single_line()
 
-    clone_submissions(root_dir, assignment, id_student_map, remove_prefix, update, preview)
+    clone_submissions(root_dir, assignment, login_student_map, remove_prefix, update, preview)
 
 
 def clone_submissions(root_dir: Path,
                       assignment: Assignment,
-                      id_student_map: Dict[str, str] = None,
+                      login_student_map: Dict[str, str] = None,
                       remove_prefix: bool = False,
                       update: bool = False,
                       preview: bool = False):
     """clone all student submissions for an assignment into root_dir."""
 
-    if id_student_map and assignment.type != 'individual':
+    if login_student_map and assignment.type != 'individual':
         logger.fatal("Use of GitHub classroom roster only valid for individual assignments.")
         sys.exit(1)
     
     with yaspin(text="Retrieving data from GitHub. Please wait...").aesthetic:
-        accepted = get_accepted_assignments(assignment)
-    submitted = [a for a in accepted if a.commit_count > 0]
-    logger.debug(pformat(submitted))
+        accepted_assignments = get_accepted_assignments(assignment)
+    submitted_assignments = [a for a in accepted_assignments if a.commit_count > 0]
+    logger.debug(pformat(submitted_assignments))
 
-    submitted_repos = {a.repository.name:a.repository for a in submitted}
+    submitted_repos = {a.repository.name:a.repository for a in submitted_assignments}
 
     repo_dirs: Dict[str, GitRepo] = {}
     other_dirs: List[str] = []
@@ -162,18 +134,21 @@ def clone_submissions(root_dir: Path,
     clone_repos: Dict[str, str] = {}
     pull_repos: List[GitRepo] = []
     bad_repos: List[str] = []
-    if not id_student_map:
+    unsubmitted_students: List[str] = []
+    errors: List[str] = []
+    if not login_student_map:
         # no renaming, so this is easy
-        clone_repos = {a.repository.name:a.repository.html_url for a in submitted if a.repository.name not in repo_dirs}
-        pull_repos = [repo_dirs.get(a.repository.name) for a in submitted if a.repository.name in repo_dirs]
-        bad_repos = [a.repository.name for a in submitted if a.repository.name in other_dirs]
+        clone_repos = {a.repository.name:a.repository.html_url for a in submitted_assignments if a.repository.name not in repo_dirs}
+        pull_repos = [repo_dirs.get(a.repository.name) for a in submitted_assignments if a.repository.name in repo_dirs]
+        bad_repos = [a.repository.name for a in submitted_assignments if a.repository.name in other_dirs]
+        unsubmitted_students = [a.students[0].login for a in accepted_assignments if a.commit_count == 0]
     else:
         # Can assume these are individual assignments so...
-        submitted_ids = [a.students[0].login for a in submitted]
-        unsubmitted_students = [v for k, v in id_student_map.items() if not k in submitted_ids]
+        submitted_ids = [a.students[0].login for a in submitted_assignments]
+        unsubmitted_students = [v for k, v in login_student_map.items() if not k in submitted_ids]
         for name in unsubmitted_students:
             logger.info(f"{name} has not submited the assignment, so not cloning")
-        id_repo_url_map = {a.students[0].login:a.repository.html_url for a in submitted}
+        id_repo_url_map = {a.students[0].login:a.repository.html_url for a in submitted_assignments}
 
         # sort the ids largest to smallest to avoid potential issue with 1 id
         # being a substring of another
@@ -194,7 +169,7 @@ def clone_submissions(root_dir: Path,
         id_dir_map: Dict[str, str] = {}
         for id in submitted_ids:
             prefix = assignment.slug
-            student_name = id_student_map.get(id)
+            student_name = login_student_map.get(id)
             if student_name:
                 student_name = re_invalid.sub('_', student_name)
                 student_name = student_name.replace('__', '_')
@@ -230,23 +205,39 @@ def clone_submissions(root_dir: Path,
         if preview:
             print(f"WOULD CLONE {dir_name} from {repo_url}")
         else:
-            logger.info(f"CLONING {dir_name} from {repo_url} ")
             repo_path = root_dir / dir_name
             try:
-                GitRepo.clone(repo_url, repo_path)
+                with yaspin(text=f"CLONING {dir_name} from {repo_url}...").aesthetic:
+                    GitRepo.clone(repo_url, repo_path)
             except:
                 logger.exception(f"Exception raised while cloning from {repo_url} into {repo_path}")
+                errors.append(dir_name)
 
     if update:
         for repo in pull_repos:
             if preview:
-                print(f"WOULD PULL {repo.common_dir}")
+                print(f"WOULD PULL {repo.name}")
             else:
-                logger.info(f"PULLING from {repo.working_dir}")
                 try:
-                    repo.pull()
+                    with yaspin(text=f"PULLING from {repo.root_dir}...").aesthetic:
+                        repo.pull()
                 except:
                     logger.exception(f"Exception raised while cloning from {repo_url} into {repo_path}")
+                    errors.append(repo.name)
+
+    clones = [k for k in clone_repos.keys() if k not in errors]
+    pulls = [r.name for r in pull_repos if r.name not in errors]
+
+    summary_rows = []
+    summary_rows.append([f'Cloned ({len(clones)})', '\n'.join(clones)])
+    pull_str = 'Pulled' if update else 'Not Pulled'
+    summary_rows.append([f'{pull_str} ({len(pulls)})', '\n'.join(pulls)])
+    if errors:
+        summary_rows.append([f'Errors ({len(errors)})', '\n'.join(errors)])
+    if unsubmitted_students:
+        summary_rows.append([f'Not Submitted ({len(unsubmitted_students)})', '\n'.join(unsubmitted_students)])
+
+    print(get_table(summary_rows, style=BasicScreenStyle()))
 
 if __name__ == '__main__':
     clone_submissions_cmd()

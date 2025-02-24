@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import click 
 import sys
 from os.path import commonprefix as get_common_prefix

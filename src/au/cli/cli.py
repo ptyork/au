@@ -1,5 +1,5 @@
 import click
-from au.lib.click.AliasedGroup import AliasedGroup
+from au.lib.click import AliasedGroup
 
 # @click.command(cls=SubdirGroup, file=__file__, module=__package__)
 @click.version_option(prog_name='au-utils')
@@ -23,17 +23,7 @@ from .sql.cli import sql
 main.add_command(sql)
 
 
-# @au.command()
-# @click.argument('name', type=str)
-# def embed(name: str):
-#     """
-#     Command embedded in cli.py.
-    
-#     Much longer stuff below here.
-#     """
-#     click.echo("Testing a command embedded directly in cli.py")
-
-# @au.command()
+# @main.command()
 # @click.argument('name', type=str)
 # def embed2(name: str):
 #     """

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from typing import Dict
 
 import click
@@ -18,7 +17,7 @@ from yaspin import yaspin
 from .pytest_reporter import PytestResultsReporter
 from .scoring import get_summary
 
-from au.lib.common.terminal import draw_single_line
+from au.lib.common import draw_single_line
 from au.lib.classroom import Classroom, Assignment
 from au.lib.classroom import choose_classroom, get_assignment, choose_assignment
 from au.lib.common.datetime import get_friendly_timedelta

@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
-
 import click
 from yaspin import yaspin
 
 from pathlib import Path
 from textwrap import fill
 
-from au.lib.common.terminal import get_term_width
-from au.lib.f_table.f_table import BasicScreenStyle, get_table
+from au.lib.common import get_term_width
+from au.lib.f_table import BasicScreenStyle, get_table
 from au.lib.git import get_dirty_repos
 
 import logging
@@ -59,7 +57,7 @@ def commit_all(root_dir: Path,
 
     with yaspin().aesthetic as spinner:
         spinner.text="Finding repositories to commit"
-        for repo in get_dirty_repositories(root_dir):
+        for repo in get_dirty_repos(root_dir):
             if repo.name.startswith('_'):
                 skips.append([repo.name, 'special directory'])
                 continue

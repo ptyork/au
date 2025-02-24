@@ -20,7 +20,7 @@ dependencies = [
 
 [tool.poetry]
 packages = [
-    { include = "au" },
+    { include = "au", from = "src" },
 ]
 
 [tool.poetry.scripts]

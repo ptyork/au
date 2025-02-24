@@ -8,7 +8,7 @@ from yaspin import yaspin
 from au.lib.classroom import Classroom, Assignment
 from au.lib.classroom import choose_classroom, get_assignment, choose_assignment
 from au.lib.git import get_git_dirs
-from au.lib.common.terminal import draw_double_line, draw_single_line
+from au.lib.common import draw_double_line, draw_single_line
 from au.lib.common.csv import dict_from_csv
 from au.lib.common.label_dir import FileType, label_dir
 
