@@ -9,10 +9,32 @@ class PytestResultsReporter:
         self.last_err = None
         self.config = None
 
+    # def pytest_report_teststatus(self, report: TestReport):
+    #     '''Basically just want to eliminate the 1 character results printing'''
+    #     category, short, verbose = '', '', ''
+    #     if hasattr(report, 'wasxfail'):
+    #         if report.skipped:
+    #             category = 'xfailed'
+    #             verbose = 'xfail'
+    #         elif report.passed:
+    #             category = 'xpassed'
+    #             verbose = ('XPASS', {'yellow': True})
+    #         return (category, short, verbose)
+    #     elif report.when in ('setup', 'teardown'):
+    #         if report.failed:
+    #             category = 'error'
+    #             verbose = 'ERROR'
+    #         elif report.skipped:
+    #             category = 'skipped'
+    #             verbose = 'SKIPPED'
+    #         return (category, short, verbose)
+    #     category = report.outcome
+    #     verbose = category.upper()
+    #     return (category, short, verbose)
+
+
     def pytest_runtest_logreport(self, report: TestReport):
-        """
-        Process a test setup / call / teardown report.
-        """
+        """Process a test setup / call / teardown report."""
 
         # ignore successful setup and teardown stages
         if report.passed and report.when != "call":
@@ -38,7 +60,6 @@ class PytestResultsReporter:
         if report.capstdout:
             state.output = report.capstdout
 
-
         # Handle details of test failure
         if report.failed:
 
@@ -57,9 +78,7 @@ class PytestResultsReporter:
 
 
     def pytest_sessionfinish(self, session, exitstatus):
-        """
-        Processes the results into a report.
-        """
+        """Processes the results into a report."""
         exitcode = pytest.ExitCode(int(exitstatus))
 
         # at least one of the tests has failed
@@ -76,9 +95,7 @@ class PytestResultsReporter:
         self.results.update()
 
     def pytest_exception_interact(self, node, call, report):
-        """
-        Catch the last exception handled in case the test run itself errors.
-        """
+        """Catch the last exception handled in case the test run itself errors."""
         if report.outcome == "failed":
             excinfo = call.excinfo
             err = excinfo.getrepr(style="no", abspath=False)
@@ -88,10 +105,7 @@ class PytestResultsReporter:
             self.last_err = self._make_message(trace, crash)
 
     def _make_message(self, trace, crash):
-        """
-        Make a formatted message for reporting.
-        """
-
+        """Make a formatted message for reporting."""
         if crash:
             message = ''
             if '<string>' in crash.path:

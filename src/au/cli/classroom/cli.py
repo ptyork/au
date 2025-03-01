@@ -1,10 +1,10 @@
 import click
-from yaspin import yaspin
+from rich.console import Console
 
-from au.lib.click import AliasedGroup, AssignmentOptions, RosterOptions, BasePath
-from au.lib.classroom import get_classroom, choose_classroom, get_assignment, choose_assignment, get_accepted_assignments
-from au.lib.classroom import AcceptedAssignment
-from au.lib.f_table.f_table import get_table, BasicScreenStyle
+from f_table import get_table, BasicScreenStyle
+
+from au.click import AliasedGroup, AssignmentOptions, RosterOptions, BasePath
+from au.classroom import get_classroom, choose_classroom, get_accepted_assignments, AcceptedAssignment
 
 
 @click.group(cls=AliasedGroup)
@@ -19,21 +19,23 @@ classroom.add_command(rename_roster)
 from .commit_all import commit_all
 classroom.add_command(commit_all)
 
-from .clone_submissions import clone_submissions_cmd
-classroom.add_command(clone_submissions_cmd)
+from .clone_all import clone_all_cmd
+classroom.add_command(clone_all_cmd)
 
-from .late_submissions import late_submissions
-classroom.add_command(late_submissions)
+from .time_details import time_details
+classroom.add_command(time_details)
+
 
 @classroom.command()
 @click.argument("assignment_dir",type=BasePath(), default='.')
 @AssignmentOptions(load=False, store=True).options
 @RosterOptions(load=False, store=True, prompt=True).options
-def configure_assignment_dir(**kwargs):
+def configure(**kwargs):
     '''Create or change settings for ASSIGNMENT_DIR (defaults to current working directory)'''
-    ...
+    # No body required as the options perform all needed tasks
 
 
+@classroom.command()
 @click.option('-c', '--classroom-id', type=int, help="The ID of the classroom to fetch", default=None)
 def open_classroom(classroom_id: int = None):
     '''Open a classroom in the default web browser'''
@@ -44,19 +46,21 @@ def open_classroom(classroom_id: int = None):
     if room:
         click.launch(room.url)
 
+
 @classroom.command()
 @AssignmentOptions(store=False).options
-def assignment_info(assignment):
+def info(assignment):
     '''Display details for a specified assignment.'''
     print(assignment.as_table())
 
 
 @classroom.command()
 @AssignmentOptions(store=False).options
-def show_accepted(assignment):
+def accepted(assignment):
     '''List accepted assignments for a selected assginemnt.'''
+    console = Console()
     print(assignment)
-    with yaspin(text="Retrieving data from GitHub. Please wait...").aesthetic:
+    with console.status("Retrieving data from GitHub Classroom", spinner="bouncingBall"):
         assignments = get_accepted_assignments(assignment)
         rows = [aa.get_row_cols() for aa in assignments]
     print(get_table(

@@ -1,33 +1,27 @@
-import click
-
-from io import TextIOWrapper
+import logging
 from pathlib import Path
 from pprint import pformat
-from yaspin import yaspin
 
-from au.lib.classroom import Classroom, Assignment
-from au.lib.classroom import choose_classroom, get_assignment, choose_assignment
-from au.lib.git import get_git_dirs
-from au.lib.common import draw_double_line, draw_single_line
-from au.lib.common.csv import dict_from_csv
-from au.lib.common.label_dir import FileType, label_dir
+import click
+from rich.console import Console
+
+from simple_git import get_git_dirs
+
+from au.click import BasePath, AssignmentOptions, RosterOptions, DebugOptions
+from au.classroom import Assignment, Roster
+from au.tools import draw_double_line, draw_single_line
 
 from .eval_assignment import retrieve_student_results, eval_assignment
 from .gen_feedback import gen_feedback, get_summary, ScoringParams, DEFAULT_FEEDBACK_FILE_NAME
 
-import logging
-_base_logging_level = logging.INFO
-logging.basicConfig(level=_base_logging_level)
+
 logger = logging.getLogger(__name__)
-logger.setLevel(_base_logging_level)
+
 
 @click.command()
-@click.argument("root_dir",
-                type=click.Path(exists=True,file_okay=False,dir_okay=True,readable=True,resolve_path=True,path_type=Path))
-@click.option("-r", "--roster", type=click.File(),
-              help="provide the classroom roster to retrieve actual student names")
-@click.option("-a", "--assignment-id", type=int,
-              help="the integer classroom id for the assignment; will prompt for the classroom and assignment if not provided")
+@click.argument("root_dir",type=BasePath(), default='.')
+@AssignmentOptions().options
+@RosterOptions().options
 @click.option("-se", "--skip_eval", is_flag=True, help="set to bypass running the evaluations")
 @click.option("-sf", "--skip_feedback", is_flag=True, help="set to bypass generating feedback")
 @click.option("--feedback-filename", type=str, default=DEFAULT_FEEDBACK_FILE_NAME, show_default=True,
@@ -40,11 +34,10 @@ logger.setLevel(_base_logging_level)
               help="the weight to apply to pytest when calculating the overall score (0 to 1)")
 @click.option("-plw", "--pylint-weight", type=float, default=0.0, show_default=True,
               help="the weight to apply to pylint when calculating the overall score (0 to 1)")
-@click.option("-d", "--debug", is_flag=True, help="set to enable detailed output")
-@click.option("-q", "--quiet", is_flag=True, help="set to reduce output to errors only")
+@DebugOptions().options
 def quick_grade(root_dir: Path,
-                roster: TextIOWrapper|Path = None,
-                assignment_id: int = None,
+                assignment: Assignment = None,
+                roster: Roster = None,
                 skip_eval: bool = False,
                 skip_feedback: bool = False,
                 feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,
@@ -52,38 +45,22 @@ def quick_grade(root_dir: Path,
                 max_score: int = 10,
                 pytest_weight: float = 1.0,
                 pylint_weight: float = 0.0,
-                debug: bool = False,
-                quiet: bool = False) -> None:
-
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    elif quiet:
-        logging.getLogger().setLevel(logging.WARNING)
+                **kwargs) -> None:
+    '''Run tests and generate feedback for all subdirectories of ROOT_DIR.'''
+    logging.basicConfig()
 
     dir_student_map = None
 
     if roster:
-        try:
-            id_student_map = dict_from_csv(roster, 'github_username', 'identifier')
-            logger.debug(pformat(id_student_map))
-            dir_student_map = label_dir(id_student_map, root_dir, FileType.DIRECTORY)
-            logger.debug(pformat(id_student_map))
+        login_student_map = roster.login_student_map
+        logger.debug(pformat(login_student_map))
+        dir_student_map = roster.get_dir_student_map(root_dir)
+        logger.debug(pformat(dir_student_map))
 
-        except Exception as ex:
-            logger.warning(f"Error encountered while processing roster: {ex}")
+    #################################################################
+    # TODO: Pull feedback filename and scoring params from settings
 
     scoring_params = ScoringParams(max_score, pytest_weight, pylint_weight)
-
-
-    ###############################################################################
-    # GET ASSIGNMENT DETAILS
-    ###############################################################################
-
-    if assignment_id:
-        assignment = get_assignment(assignment_id)
-    else:
-        classroom: Classroom = choose_classroom()
-        assignment: Assignment = choose_assignment(classroom)
 
     draw_single_line()
 
@@ -99,7 +76,8 @@ def quick_grade(root_dir: Path,
     # PROCESS DIRS
     ###############################################################################
 
-    with yaspin(text=f"Finding assignment directories in {root_dir}").aesthetic:
+    console = Console()
+    with console.status(status="Finding assignment directories in {root_dir}", spinner="bouncingBall"):
         student_repos = get_git_dirs(root_dir)
         student_repos.sort()
 

@@ -1,7 +1,7 @@
 import click
-from yaspin import yaspin
 
-from au.lib.click import AliasedGroup
+from au.click import AliasedGroup
+
 
 @click.group(cls=AliasedGroup)
 def python():

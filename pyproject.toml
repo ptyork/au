@@ -1,30 +1,38 @@
 [project]
 name = "au-tools"
-version = "0.25.2"
+version = "0.25.3.1"
 description = "AU CLASSROOM AUTOMATION TOOLS"
 authors = [
     { name = "Paul York", email = "paul@yorkfamily.com" }
 ]
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "pytest (>=8.3.4,<9.0.0)",
     "pytest-subtests (>=0.14.1,<0.15.0)",
     "pylint (>=3.3.4,<4.0.0)",
-    "gitpython (>=3.1.44,<4.0.0)",
-    "yaspin (>=3.1.0,<4.0.0)",
     "click (>=8.1.8,<9.0.0)",
     "dacite (>=1.9.2,<2.0.0)",
-    "tomlkit (>=0.13.2,<0.14.0)"
+    "tomlkit (>=0.13.2,<0.14.0)",
+    "rich (>=13.9.4,<14.0.0)"
 ]
+
+[project.scripts]
+au = 'au.cli:main'
+
+[project.urls]
+homepage        = "https://github.com/ptyork/au"
+repository      = "https://github.com/ptyork/au"
+"Bug Tracker"   = "https://github.com/ptyork/au/issues"
 
 [tool.poetry]
 packages = [
-    { include = "au", from = "src" },
+   { include = "au", from = "src" },
+   { include = "f_table", from = "src" },
+   { include = "simple_git", from = "src" },
 ]
 
-[tool.poetry.scripts]
-au = 'au.cli:main'
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

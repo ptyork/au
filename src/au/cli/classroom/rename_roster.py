@@ -1,31 +1,28 @@
-import click 
-import sys
+import logging
 from os.path import commonprefix as get_common_prefix
-from io import TextIOWrapper
-import re
 from pathlib import Path
 from pprint import pformat
 
-from au.lib.common.csv import dict_from_csv
-from au.lib.common.label_dir import FileType, label_dir
+import click 
 
-import logging
+from au.classroom import Roster
+from au.click import RosterOptions, DebugOptions, BasePath
+
+
 logger = logging.getLogger(__name__)
 
+
 @click.command()
-@click.argument("root_dir",
-                type=click.Path(exists=True,file_okay=False,dir_okay=True,readable=True,resolve_path=True,path_type=Path))
-@click.argument("roster", type=click.File())
-@click.option("-rp", "--remove-prefix", is_flag=True, help="set to remove any prefix string common to all subdirs")
-@click.option("-d", "--debug", is_flag=True, help="set to enable detailed output")
-@click.option("-q", "--quiet", is_flag=True, help="set to reduce output to errors only")
+@click.argument("root_dir",type=BasePath(), default='.')
+@RosterOptions(prompt=True, required=True).options
+@click.option("-pp","--preserve-prefix", is_flag=True, help="set to preserve the prefix (slug) string common to all repositories")
 @click.option("-p", "--preview", is_flag=True, help="set to show changes without actually making them")
+@DebugOptions().options
 def rename_roster(root_dir: Path,
-                  roster: TextIOWrapper|Path,
-                  remove_prefix: bool = False,
+                  roster: Roster,
+                  preserve_prefix: bool = False,
                   preview: bool = False,
-                  debug: bool = False,
-                  quiet: bool = False) -> None:
+                  **kwargs) -> None:
     '''
     Rename subdirectories to contain students' real names
     
@@ -71,58 +68,31 @@ def rename_roster(root_dir: Path,
     '''
     logging.basicConfig()
 
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    elif quiet:
-        logging.getLogger().setLevel(logging.WARNING)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
-    
     logger.debug(pformat(root_dir))
     logger.debug(pformat(roster))
 
-    # process roster to get mapping of dirs to students
-    try:
-        id_student_map = dict_from_csv(roster, 'github_username', 'identifier')
-        logger.debug(pformat(id_student_map))
-        dir_student_map = label_dir(id_student_map, root_dir, FileType.DIRECTORY)
-        logger.debug(pformat(id_student_map))
-        student_id_map = dict((v,k) for k,v in id_student_map.items())
-    except Exception as ex:
-        logger.error(f"Error encountered while processing roster: {ex}")
-        sys.exit(1)
-
-    common_prefix = get_common_prefix(list(dir_student_map.keys()))
-    logger.debug(f"Common Prefix: {common_prefix}")
-
-    re_invalid = re.compile(r'([<>:"/\\\,|?*]|\s)+')
+    login_dir_map = roster.get_login_dir_map(root_dir)
+    common_prefix = get_common_prefix(list(login_dir_map.values()))
+    prefix = ''
+    if preserve_prefix:
+        prefix = common_prefix
+    login_dirname_map = roster.get_dir_names(prefix)
 
     logger.debug(f"Renaming subdirectories in {root_dir}")
-    for sub_dir in root_dir.iterdir():
-        if dir_student_map.get(sub_dir.name) and sub_dir.is_dir():
-            student_name = dir_student_map[sub_dir.name]
-            student_id = student_id_map[student_name]
-            safe_student_name = re_invalid.sub('_', student_name)
-            safe_student_name = safe_student_name.replace('__', '_')
-            if safe_student_name in sub_dir.name:
-                logger.debug(f"ALREADY RENAMED: {sub_dir}")
-                continue
-            full_name = safe_student_name + '@' + student_id
-            new_dir_name = sub_dir.name.replace(student_id, full_name)
-            if remove_prefix:
-                new_dir_name = new_dir_name.removeprefix(common_prefix)
-            new_dir = root_dir / new_dir_name
-
+    for login, old_dir_name in login_dir_map.items():
+        new_dir_name = login_dirname_map.get(login)
+        if old_dir_name and new_dir_name and old_dir_name != new_dir_name:
+            old_dir = root_dir / old_dir_name
             if preview:
-                logger.info(f"Would rename {sub_dir} to {new_dir}")
+                logger.info(f"Would rename {old_dir_name} to {new_dir_name}")
             else:
-                logger.info(f"Renaming {sub_dir} to {new_dir}")
+                logger.info(f"Renaming {old_dir_name} to {new_dir_name}")
                 try:
-                    sub_dir.rename(new_dir)
+                    old_dir.rename(new_dir_name)
                 except Exception as ex:
-                    logger.error(f'Unable to rename "{sub_dir}": {ex}')
+                    logger.error(f'Unable to rename "{old_dir}": {ex}')
         else:
-            logger.debug(f"SKIPPING: {sub_dir}")
+            logger.info(f"SKIPPING: {old_dir_name}")
 
 if __name__ == '__main__':
     rename_roster()

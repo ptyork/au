@@ -1,19 +1,20 @@
 from typing import Dict
-import click
-
+import logging
 import re
 from pathlib import Path
 from textwrap import wrap, indent
 from pprint import pformat
 
+import click
+
+from au.click import BasePath, DebugOptions
+
 from .eval_assignment import retrieve_student_results
 from .scoring import get_summary, get_summary_row, get_student_scores, ScoringParams
 
-import logging
-_base_logging_level = logging.INFO
-logging.basicConfig(level=_base_logging_level)
+
 logger = logging.getLogger(__name__)
-logger.setLevel(_base_logging_level)
+
 
 DEFAULT_FEEDBACK_FILE_NAME = 'FEEDBACK.md'
 
@@ -32,8 +33,7 @@ def get_feedback_file_score(feedback_file_path: Path) -> str:
 
 
 @click.command('gen-feedback')
-@click.argument("student_dir",
-                type=click.Path(exists=True,file_okay=False,dir_okay=True,readable=True,resolve_path=True,path_type=Path))
+@click.argument("student_dir", type=BasePath(), required=True)
 @click.option("--feedback-filename", type=str, default=DEFAULT_FEEDBACK_FILE_NAME,
               help="name of markdown file to generate")
 @click.option("-o", "--overwrite-feedback", is_flag = True,
@@ -44,27 +44,25 @@ def get_feedback_file_score(feedback_file_path: Path) -> str:
               help="the weight to apply to pytest when calculating the overall score (0 to 1)")
 @click.option("-plw", "--pylint-weight", type=float, default=0.0, show_default=True,
               help="the weight to apply to pylint when calculating the overall score (0 to 1)")
-@click.option("-d", "--debug", is_flag=True, help="set to enable detailed output")
-@click.option("-q", "--quiet", is_flag=True, help="set to reduce output to errors only")
+@DebugOptions().options
 def gen_feedback_cmd(student_dir: Path,
                      feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,
                      overwrite_feedback: bool = False,
                      max_score: int = 10,
                      pytest_weight: float = 1.0,
                      pylint_weight: float = 0.0,
-                     debug: bool = False,
-                     quiet: bool = False) -> None:
-
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    elif quiet:
-        logging.getLogger().setLevel(logging.WARNING)
-
+                     **kwargs) -> None:
+    '''Generate a feedback file for a single assignment.'''
+    logging.basicConfig()
+    
     try:
         student_results = retrieve_student_results(student_dir)
     except:
         logger.error(f"Unable to find results file. Have you run the tests yet?")
-    
+
+    #################################################################
+    # TODO: Pull feedback filename and scoring params from settings
+
     scoring_params = ScoringParams(max_score, pytest_weight, pylint_weight)
     gen_feedback(student_results, student_dir, feedback_filename, scoring_params, overwrite_feedback)
     
@@ -74,10 +72,7 @@ def gen_feedback(student_results: Dict[str,any],
                  feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,
                  scoring_params: ScoringParams = ScoringParams(),
                  overwrite_feedback = False) -> None:
-    '''
-    Generate a feedback file for a single student
-    '''
-
+    '''Generate a feedback file for a single student.'''
     feedback_file_path = (student_dir / feedback_filename).resolve()
 
     if feedback_file_path.exists() and not overwrite_feedback:

@@ -1,8 +1,16 @@
 import click
-from au.lib.click import AliasedGroup
+from au.click import AliasedGroup
+from importlib.metadata import version, PackageNotFoundError
+
+MODULE_NAME = 'au-tools'
+
+try:
+    __version__ = version(MODULE_NAME)
+except PackageNotFoundError:
+    __version__ = "undetermined"
 
 # @click.command(cls=SubdirGroup, file=__file__, module=__package__)
-@click.version_option(prog_name='au-utils')
+@click.version_option(__version__)
 @click.group(cls=AliasedGroup)
 def main():
     """
@@ -11,7 +19,6 @@ def main():
     Solid gold tools for automating much of the workflow involved in managing
     and grading assignments using GitHub Classroom.
     """
-    pass
 
 from .classroom.cli import classroom
 main.add_command(classroom)

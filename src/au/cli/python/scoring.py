@@ -1,8 +1,11 @@
 from typing import Dict
 from dataclasses import dataclass
 
-from au.lib.common.datetime import get_friendly_local_datetime
-from au.lib.f_table.f_table import MarkdownStyle, NoBorderScreenStyle, get_table, get_table_row
+from f_table import MarkdownStyle, NoBorderScreenStyle, get_table, get_table_row
+
+from au.tools.datetime import get_friendly_local_datetime
+
+from .pytest_data import Results
 
 @dataclass
 class ScoringParams:
@@ -38,25 +41,49 @@ def get_summary(student_results: Dict, scoring_params: ScoringParams = None, get
         ['Last Commit Message', student_results['commit_message']],
         ['Total Commit Count', student_results['num_commits']]
     ]
+
+    pytest_weight = ''
+    pylint_weight = ''
+    final_score_row = None
     if scoring_params:
-        scores = get_student_scores(student_results, scoring_params)
-        summary_values += [
-            ['Funcationality Score', f"{scores.pytest_pct*100:.4g}% (weight: {scoring_params.pytest_weight*100:.4g}%)"],
-            ['Code Style Score', f"{scores.pylint_pct*100:.4g}% (weight: {scoring_params.pylint_weight*100:.4g}%)"],
-            ['Calculated Score', f"{scores.overall_score:g} / {scoring_params.max_score:g}"]
-        ]
+        pytest_weight = f"(weight: {scoring_params.pytest_weight*100:.4g}%)"
+        pylint_weight = f"(weight: {scoring_params.pylint_weight*100:.4g}%)"
+        final_score_row = ['Calculated Score', f"{scores.overall_score:g} / {scoring_params.max_score:g}"]
     else:
-        summary_values += [
-            ['Funcationality Score',f"{student_results['pytest_pct']*100:.4g}%"],
-            ['Code Style Score', f"{student_results['pylint_pct']*100:.4g}%"]
-        ]
+        scoring_params = ScoringParams()
+
+    scores = get_student_scores(student_results, scoring_params)
+
+    summary_values.append(
+        ['Funcationality Score', f"{scores.pytest_pct*100:.4g}% {pytest_weight}"],
+    )
+
+    try:
+        pytest_results = Results.from_dict(student_results.get('pytest_results'))
+        for test_class in pytest_results.test_classes.values():
+            tot = len(test_class.tests)
+            correct = test_class.pass_count
+            summary_values.append(
+                [f' + {test_class.name}',f'{correct} out of {tot}']
+            )
+    except:
+        pass
+
+    summary_values.append(
+        ['Code Style Score', f"{scores.pylint_pct*100:.4g}% {pylint_weight}"],
+    )
+
+    if final_score_row:
+        summary_values.append(final_score_row)
+
     past_due = student_results.setdefault("past_due", None)
     if past_due:
-        summary_values += [
+        summary_values.append(
             ['Past Due', past_due]
-        ]
+        )
+
     style = MarkdownStyle() if get_markdown else NoBorderScreenStyle()
-    return get_table(summary_values, col_defs=['25','52'], lazy_end=True, style=style)
+    return get_table(summary_values, col_defs=['25T','52'], lazy_end=True, style=style)
 
 def get_summary_row(label: str, value: str):
-    return get_table_row([label, value], col_defs=['25','52'], lazy_end=True, style=MarkdownStyle())
+    return get_table_row([label, value], col_defs=['25T','52'], lazy_end=True, style=MarkdownStyle())

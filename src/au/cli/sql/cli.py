@@ -1,16 +1,19 @@
-import click
 from pathlib import Path
 from pydoc import pager
 
-from au.lib.click import AliasedGroup
-from au.lib.common import get_double_line
+import click
+
+from au.click import AliasedGroup
+from au.tools import get_double_line
 
 from .query_file import get_query_files
+
 
 @click.command(cls=AliasedGroup)
 def sql():
     """Commands for working with SQL assignments."""
     pass
+
 
 @sql.command()
 @click.argument("path",required=True,
