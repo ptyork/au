@@ -3,9 +3,10 @@ from dataclasses import dataclass
 
 from f_table import MarkdownStyle, NoBorderScreenStyle, get_table, get_table_row
 
-from au.tools.datetime import get_friendly_local_datetime
+from au.common.datetime import get_friendly_local_datetime
 
 from .pytest_data import Results
+
 
 @dataclass
 class ScoringParams:
@@ -21,56 +22,65 @@ class Score:
     overall_score: float
 
 
-def get_student_scores(student_results: Dict, scoring_params: ScoringParams = ScoringParams()) -> Score:
+def get_student_scores(
+    student_results: Dict, scoring_params: ScoringParams = ScoringParams()
+) -> Score:
     # Calculate score
-    max = scoring_params.max_score
-    pt_pct = student_results.setdefault('pytest_pct', 0)
-    pt_weight = scoring_params.pytest_weight
-    pl_pct = student_results.setdefault('pylint_pct', 0)
-    pl_weight = scoring_params.pylint_weight
-    total_score = round(max * ((pt_pct * pt_weight) + (pl_pct * pl_weight)), 2)
+    pt_pct = student_results.setdefault("pytest_pct", 0)
+    pl_pct = student_results.setdefault("pylint_pct", 0)
+    total_score = None
+    if scoring_params:
+        max = scoring_params.max_score
+        pt_weight = scoring_params.pytest_weight
+        pl_weight = scoring_params.pylint_weight
+        total_score = round(max * ((pt_pct * pt_weight) + (pl_pct * pl_weight)), 2)
 
     return Score(pt_pct, pl_pct, total_score)
 
 
-def get_summary(student_results: Dict, scoring_params: ScoringParams = None, get_markdown = False) -> str:
+def get_summary(
+    student_results: Dict, scoring_params: ScoringParams = None, get_markdown=False
+) -> str:
     summary_values = [
-        ['Student Name', student_results['name'] ],
-        ['Last Commit Date', get_friendly_local_datetime(student_results['commit_date'])],
-        ['Last Commit Author', student_results['commiter_name']],
-        ['Last Commit Message', student_results['commit_message']],
-        ['Total Commit Count', student_results['num_commits']]
+        ["Student Name", student_results["name"]],
+        [
+            "Last Commit Date",
+            get_friendly_local_datetime(student_results["commit_date"]),
+        ],
+        ["Last Commit Author", student_results["commiter_name"]],
+        ["Last Commit Message", student_results["commit_message"]],
+        ["Total Commit Count", student_results["num_commits"]],
     ]
 
-    pytest_weight = ''
-    pylint_weight = ''
+    pytest_weight = ""
+    pylint_weight = ""
     final_score_row = None
     if scoring_params:
         pytest_weight = f"(weight: {scoring_params.pytest_weight*100:.4g}%)"
         pylint_weight = f"(weight: {scoring_params.pylint_weight*100:.4g}%)"
-        final_score_row = ['Calculated Score', f"{scores.overall_score:g} / {scoring_params.max_score:g}"]
+        scores = get_student_scores(student_results, scoring_params)
+        final_score_row = [
+            "Calculated Score",
+            f"{scores.overall_score:g} / {scoring_params.max_score:g}",
+        ]
     else:
-        scoring_params = ScoringParams()
-
-    scores = get_student_scores(student_results, scoring_params)
+        scores = get_student_scores(student_results, None)
 
     summary_values.append(
-        ['Funcationality Score', f"{scores.pytest_pct*100:.4g}% {pytest_weight}"],
+        ["Functionality Score", f"{scores.pytest_pct*100:.4g}% {pytest_weight}"],
     )
 
     try:
-        pytest_results = Results.from_dict(student_results.get('pytest_results'))
+        pytest_results = Results.from_dict(student_results.get("pytest_results"))
         for test_class in pytest_results.test_classes.values():
             tot = len(test_class.tests)
             correct = test_class.pass_count
-            summary_values.append(
-                [f' + {test_class.name}',f'{correct} out of {tot}']
-            )
+            summary_values.append([f" + {test_class.name}", f"{correct} out of {tot}"])
     except:
         pass
 
     summary_values.append(
-        ['Code Style Score', f"{scores.pylint_pct*100:.4g}% {pylint_weight}"],
+        ["Code Style Score", f"{scores.pylint_pct*100:.4g}% {pylint_weight}"],
     )
 
     if final_score_row:
@@ -78,12 +88,13 @@ def get_summary(student_results: Dict, scoring_params: ScoringParams = None, get
 
     past_due = student_results.setdefault("past_due", None)
     if past_due:
-        summary_values.append(
-            ['Past Due', past_due]
-        )
+        summary_values.append(["Past Due", past_due])
 
     style = MarkdownStyle() if get_markdown else NoBorderScreenStyle()
-    return get_table(summary_values, col_defs=['25T','52'], lazy_end=True, style=style)
+    return get_table(summary_values, col_defs=["25T", "52"], lazy_end=True, style=style)
+
 
 def get_summary_row(label: str, value: str):
-    return get_table_row([label, value], col_defs=['25T','52'], lazy_end=True, style=MarkdownStyle())
+    return get_table_row(
+        [label, value], col_defs=["25T", "52"], lazy_end=True, style=MarkdownStyle()
+    )

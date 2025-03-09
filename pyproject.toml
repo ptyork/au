@@ -1,12 +1,15 @@
 [project]
 name = "au-tools"
-version = "0.25.3.1"
-description = "AU CLASSROOM AUTOMATION TOOLS"
+version = "0.1.4"
+description = "AU - GitHub Classroom Automation Tools"
 authors = [
     { name = "Paul York", email = "paul@yorkfamily.com" }
 ]
 license = "MIT"
 readme = "README.md"
+keywords = [
+    "github", "classroom", "autograde", "automation", 
+]
 requires-python = ">=3.12,<4.0"
 dependencies = [
     "pytest (>=8.3.4,<9.0.0)",
@@ -15,14 +18,15 @@ dependencies = [
     "click (>=8.1.8,<9.0.0)",
     "dacite (>=1.9.2,<2.0.0)",
     "tomlkit (>=0.13.2,<0.14.0)",
-    "rich (>=13.9.4,<14.0.0)"
+    "rich (>=13.9.4,<14.0.0)",
+    "beaupy (>=3.10.1,<4.0.0)"
 ]
 
 [project.scripts]
 au = 'au.cli:main'
 
 [project.urls]
-homepage        = "https://github.com/ptyork/au"
+homepage        = "https://ptyork.github.io/au"
 repository      = "https://github.com/ptyork/au"
 "Bug Tracker"   = "https://github.com/ptyork/au/issues"
 
@@ -30,7 +34,7 @@ repository      = "https://github.com/ptyork/au"
 packages = [
    { include = "au", from = "src" },
    { include = "f_table", from = "src" },
-   { include = "simple_git", from = "src" },
+   { include = "git_wrap", from = "src" },
 ]
 
 

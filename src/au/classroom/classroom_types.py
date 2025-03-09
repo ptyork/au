@@ -4,9 +4,11 @@ from datetime import date, datetime
 import json
 from pprint import pformat
 
+from au.classroom import Roster
 from f_table import get_table
 
-from au.tools.datetime import date_to_local, get_friendly_local_datetime
+from au.common.datetime import date_to_local, get_friendly_local_datetime
+
 
 def _github_json_serializer(obj):
     if isinstance(obj, (date, datetime)):
@@ -14,18 +16,21 @@ def _github_json_serializer(obj):
         return dt.isoformat()
     raise TypeError(f"Type {type(obj)} not JSON serializable")
 
+
 def _github_json_deserializer(dct):
     for key, value in dct.items():
         if isinstance(value, str):
             try:
-                dct[key] = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                dct[key] = datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
                 pass
     return dct
 
+
 def _as_json(obj):
     dct = asdict(obj)
     return json.dumps(dct, default=_github_json_serializer)
+
 
 @dataclass
 class Organization:
@@ -37,17 +42,21 @@ class Organization:
     avatar_url: Optional[str]
 
     def as_table(self) -> str:
-        return get_table([
-                    ['Organization Login',self.login],
-                    ['Organization ID',self.id],
-                    ['Organization Name',self.name],
-                    ['Organization Node ID',self.node_id],
-                    ['Organization HTML URL',self.html_url],
-                    ['Organization Avatar URL',self.avatar_url],
-                ], col_defs=['25',''])
-    
+        return get_table(
+            [
+                ["Organization Login", self.login],
+                ["Organization ID", self.id],
+                ["Organization Name", self.name],
+                ["Organization Node ID", self.node_id],
+                ["Organization HTML URL", self.html_url],
+                ["Organization Avatar URL", self.avatar_url],
+            ],
+            col_defs=["25", ""],
+        )
+
     def __str__(self):
         return self.as_table()
+
 
 @dataclass
 class Classroom:
@@ -58,24 +67,30 @@ class Classroom:
     organization: Optional[Organization]
 
     def as_table(self) -> str:
-        table = get_table([
-            ['Classroom Name',self.name],
-            ['Classroom ID',self.id],
-            ['Classroom URL',self.url],
-            ['Classroom is Archived',self.archived],
-        ], col_defs=['25',''])
+        table = get_table(
+            [
+                ["Classroom Name", self.name],
+                ["Classroom ID", self.id],
+                ["Classroom URL", self.url],
+                ["Classroom is Archived", self.archived],
+            ],
+            col_defs=["25", ""],
+        )
         if self.organization:
-            table += '\n' + self.organization.as_table()
+            table += "\n" + self.organization.as_table()
         return table
 
     def as_json(self) -> str:
         return _as_json(self)
 
     def __str__(self):
-        return get_table([
-                ['Classroom Name',self.name],
-                ['Classroom ID',self.id],
-            ], col_defs=['25',''])
+        return get_table(
+            [
+                ["Classroom Name", self.name],
+                ["Classroom ID", self.id],
+            ],
+            col_defs=["25", ""],
+        )
 
 
 @dataclass
@@ -93,7 +108,7 @@ class Repository:
 
     def __str__(self):
         return pformat(self)
-   
+
 
 @dataclass
 class Assignment:
@@ -118,37 +133,41 @@ class Assignment:
     starter_code_repository: Optional[Repository]
 
     def as_table(self) -> str:
-        table = get_table([
-                ['Classroom Name',self.classroom.name],
-                ['Classroom ID',self.classroom.id],
-                ['Assignment Title',self.title],
-                ['Short Name (slug)',self.slug],
-                ['Assignment ID',self.id],
-                ['Assignment Deadline',get_friendly_local_datetime(self.deadline)],
-                ['Assignment Type',self.type],
-                ['Assignment Editor',self.editor],
-                ['Assignment is Public',self.public_repo],
-                ['Number Accepted',self.accepted],
-                ['Number Submitted',self.submissions],
-                ['Number Passing',self.passing],
-            ], col_defs=['25',''])
+        table = get_table(
+            [
+                ["Classroom Name", self.classroom.name],
+                ["Classroom ID", self.classroom.id],
+                ["Assignment Title", self.title],
+                ["Short Name (slug)", self.slug],
+                ["Assignment ID", self.id],
+                ["Assignment Deadline", get_friendly_local_datetime(self.deadline)],
+                ["Assignment Type", self.type],
+                ["Assignment Editor", self.editor],
+                ["Assignment is Public", self.public_repo],
+                ["Number Accepted", self.accepted],
+                ["Number Submitted", self.submissions],
+                ["Number Passing", self.passing],
+            ],
+            col_defs=["25", ""],
+        )
         return table
-
 
     def as_json(self) -> str:
         return _as_json(self)
 
     def __str__(self):
-        table = get_table([
-                ['Assignment Title',self.title],
-                ['Assignment ID',self.id],
-                ['Deadline',get_friendly_local_datetime(self.deadline)],
-            ], col_defs=['25',''])
+        table = get_table(
+            [
+                ["Assignment Title", self.title],
+                ["Assignment ID", self.id],
+                ["Deadline", get_friendly_local_datetime(self.deadline)],
+            ],
+            col_defs=["25", ""],
+        )
         if self.classroom:
-            table = str(self.classroom) + '\n' + table
+            table = str(self.classroom) + "\n" + table
         return table
 
-    
 
 @dataclass
 class Student:
@@ -178,18 +197,22 @@ class AcceptedAssignment:
 
     @staticmethod
     def get_headers() -> List[str]:
-        return ['ID','#CMIT','GITHUB USERNAME','REPOSITORY']
+        return ["ID", "#CMIT", "GITHUB USERNAME", "REPOSITORY"]
 
-    def get_row_cols(self) -> List[str]:
+    def get_row_cols(self, roster: Roster = None) -> List[str]:
         if not self.students:
-            student = 'NO STUDENT'
+            student = "NO STUDENT"
         else:
             student = self.students[0].login
+            if roster:
+                name = roster.get_name(student)
+                if name:
+                    student = name
+
         return [self.id, self.commit_count, student, self.repository.html_url]
 
     def as_json(self) -> str:
         return _as_json(self)
-   
+
     def __str__(self):
         return pformat(self)
-

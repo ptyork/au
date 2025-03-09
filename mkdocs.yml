@@ -1,0 +1,59 @@
+nav:
+  - Overview:
+    - index.md
+    - Installation: install.md
+  - Usage: 
+    - references/index.md
+    - Command Line Reference: references/cli.md
+  - Assignment Workflows:
+    - workflows/index.md
+    - Python: workflows/python.md
+    - SQL: workflows/sql.md
+
+site_name: AU Tools Documentation
+site_url: https://ptyork.github.io/au/
+repo_url: https://github.com/ptyork/au/
+extra_css:
+  - _assets/extra.css
+markdown_extensions: 
+  - attr_list
+  - mkdocs-click
+plugins: 
+  - search
+theme:
+  name: material
+  # logo: _images/logo.svg
+  favicon: _images/favicon.svg
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - toc.integrate
+    - toc.follow
+    - content.code.copy
+  palette:
+  
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default 
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference

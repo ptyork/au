@@ -33,6 +33,24 @@ tests = ["cloudpickle", "hypothesis", "mypy (>=1.11.1)", "pympler", "pytest (>=4
 tests-mypy = ["mypy (>=1.11.1)", "pytest-mypy-plugins"]
 
 [[package]]
+name = "beaupy"
+version = "3.10.1"
+description = "A library of elements for interactive TUIs in Python"
+optional = false
+python-versions = "<4.0.0,>=3.7.8"
+groups = ["main"]
+files = [
+    {file = "beaupy-3.10.1-py3-none-any.whl", hash = "sha256:b31337581fc445fc81b07701d97de6409d6b13a4d0b620ca461475c2756c45ca"},
+    {file = "beaupy-3.10.1.tar.gz", hash = "sha256:8d8a1cde212264a0402a672eed322488fb212f2e11c80c08ed011a70b489ef12"},
+]
+
+[package.dependencies]
+emoji = ">=2.0.0,<3.0.0"
+python-yakh = ">=0.4.1,<0.5.0"
+questo = ">=0.4.1,<0.5.0"
+rich = ">=12.2.0"
+
+[[package]]
 name = "click"
 version = "8.1.8"
 description = "Composable command line interface toolkit"
@@ -90,6 +108,21 @@ files = [
 [package.extras]
 graph = ["objgraph (>=1.7.2)"]
 profile = ["gprof2dot (>=2022.7.29)"]
+
+[[package]]
+name = "emoji"
+version = "2.14.1"
+description = "Emoji for Python"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "emoji-2.14.1-py3-none-any.whl", hash = "sha256:35a8a486c1460addb1499e3bf7929d3889b2e2841a57401903699fef595e942b"},
+    {file = "emoji-2.14.1.tar.gz", hash = "sha256:f8c50043d79a2c1410ebfae833ae1868d5941a67a6cd4d18377e2eb0bd79346b"},
+]
+
+[package.extras]
+dev = ["coverage", "pytest (>=7.4.4)"]
 
 [[package]]
 name = "iniconfig"
@@ -291,6 +324,34 @@ attrs = ">=19.2.0"
 pytest = ">=7.4"
 
 [[package]]
+name = "python-yakh"
+version = "0.4.1"
+description = "Yet Another Keypress Handler"
+optional = false
+python-versions = "<4.0.0,>=3.7.8"
+groups = ["main"]
+files = [
+    {file = "python_yakh-0.4.1-py3-none-any.whl", hash = "sha256:d69507e13e03d09cefd88030f74b6d5369b67de004be975a35be28eb286122e4"},
+    {file = "python_yakh-0.4.1.tar.gz", hash = "sha256:da03e800b4f2f5d85344f1668e852687c12dc1a99a03c65cf3dc13a3680da49d"},
+]
+
+[[package]]
+name = "questo"
+version = "0.4.1"
+description = "A library of extensible and modular CLI prompt elements"
+optional = false
+python-versions = "<4.0.0,>=3.7.8"
+groups = ["main"]
+files = [
+    {file = "questo-0.4.1-py3-none-any.whl", hash = "sha256:57515abdec03e9b2ddcdfe7031e8b1742408fe61c9914b1395c0caa4f9abad7b"},
+    {file = "questo-0.4.1.tar.gz", hash = "sha256:efe4fb0ca68606555a5357d6424d4116081e9af7f10d8a6208039aa9b130d30f"},
+]
+
+[package.dependencies]
+python-yakh = ">=0.4.1,<0.5.0"
+rich = ">=12.2.0"
+
+[[package]]
 name = "rich"
 version = "13.9.4"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -310,21 +371,6 @@ pygments = ">=2.13.0,<3.0.0"
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
-name = "termcolor"
-version = "2.3.0"
-description = "ANSI color formatting for output in terminal"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "termcolor-2.3.0-py3-none-any.whl", hash = "sha256:3afb05607b89aed0ffe25202399ee0867ad4d3cb4180d98aaf8eefa6a5f7d475"},
-    {file = "termcolor-2.3.0.tar.gz", hash = "sha256:b5b08f68937f138fe92f6c089b99f1e2da0ae56c52b78bf7075fd95420fd9a5a"},
-]
-
-[package.extras]
-tests = ["pytest", "pytest-cov"]
-
-[[package]]
 name = "tomlkit"
 version = "0.13.2"
 description = "Style preserving TOML library"
@@ -336,22 +382,7 @@ files = [
     {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
 ]
 
-[[package]]
-name = "yaspin"
-version = "3.1.0"
-description = "Yet Another Terminal Spinner"
-optional = false
-python-versions = "<4.0,>=3.9"
-groups = ["main"]
-files = [
-    {file = "yaspin-3.1.0-py3-none-any.whl", hash = "sha256:5e3d4dfb547d942cae6565718123f1ecfa93e745b7e51871ad2bbae839e71b73"},
-    {file = "yaspin-3.1.0.tar.gz", hash = "sha256:7b97c7e257ec598f98cef9878e038bfa619ceb54ac31d61d8ead2b3128f8d7c7"},
-]
-
-[package.dependencies]
-termcolor = ">=2.2.0,<2.4.0"
-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "1fb8a0cc3f2352f06cfe8ddb8d9d0d378fddf95bc668b9c10979f85e5d4ed98a"
+content-hash = "0edb06850b500d420d67d0cb925b4346a8eee1ef823bd9c81233b2abc2f53ce3"

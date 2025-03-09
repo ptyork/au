@@ -3,7 +3,7 @@ from os.path import commonprefix as get_common_prefix
 from pathlib import Path
 from pprint import pformat
 
-import click 
+import click
 
 from au.classroom import Roster
 from au.click import RosterOptions, DebugOptions, BasePath
@@ -13,26 +13,37 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.argument("root_dir",type=BasePath(), default='.')
+@click.argument("root_dir", type=BasePath(), default=".")
 @RosterOptions(prompt=True, required=True).options
-@click.option("-pp","--preserve-prefix", is_flag=True, help="set to preserve the prefix (slug) string common to all repositories")
-@click.option("-p", "--preview", is_flag=True, help="set to show changes without actually making them")
+@click.option(
+    "--preserve-prefix",
+    is_flag=True,
+    help="set to preserve the prefix (slug) string common to all repositories",
+)
+@click.option(
+    "-p",
+    "--preview",
+    is_flag=True,
+    help="set to show changes without actually making them",
+)
 @DebugOptions().options
-def rename_roster(root_dir: Path,
-                  roster: Roster,
-                  preserve_prefix: bool = False,
-                  preview: bool = False,
-                  **kwargs) -> None:
-    '''
+def rename_roster(
+    root_dir: Path,
+    roster: Roster,
+    preserve_prefix: bool = False,
+    preview: bool = False,
+    **kwargs,
+) -> None:
+    """
     Rename subdirectories to contain students' real names
-    
+
     \b
     Required Arguments:
       ROOT-DIR
         the base directory containing the files subdirectories to be renamed
       ROSTER
         the GitHub Classroom roster file (usually named `classroom_roster.csv`)
-    
+
     Rename the subdirectories in ROOT-DIR to contain a students real name by
     matching a the Github ID from the classroom roster to a folder name. Any
     potentially unsafe characters, as well as commas and spaces, are replaced
@@ -58,14 +69,14 @@ def rename_roster(root_dir: Path,
     the student's name is found in the directory name, it is likewise skipped as
     it is assumed that the directory has already been renamed.
 
-    \b 
+    \b
     Windows Example Usage:
         au classroom rename_roster .\\subfolder\\ .\\classroom_roster.csv
-    
+
     \b
     Linux / MacOS Example Usage:
         python3 gh_rename_roster.py ./subfolder/ ./classroom_roster.csv
-    '''
+    """
     logging.basicConfig()
 
     logger.debug(pformat(root_dir))
@@ -73,7 +84,7 @@ def rename_roster(root_dir: Path,
 
     login_dir_map = roster.get_login_dir_map(root_dir)
     common_prefix = get_common_prefix(list(login_dir_map.values()))
-    prefix = ''
+    prefix = ""
     if preserve_prefix:
         prefix = common_prefix
     login_dirname_map = roster.get_dir_names(prefix)
@@ -94,5 +105,6 @@ def rename_roster(root_dir: Path,
         else:
             logger.info(f"SKIPPING: {old_dir_name}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rename_roster()

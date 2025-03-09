@@ -5,34 +5,48 @@ from pathlib import Path
 from pprint import pformat
 
 import logging
+
 logger = logging.getLogger(__name__)
 
+
 class FileType(Enum):
-    """Enum for FILE, DIRECTORY or BOTH"""
+    """
+    Enum for FILE, DIRECTORY or BOTH
+    """
+
     FILE = auto()
     DIRECTORY = auto()
     BOTH = auto()
 
-@overload
-def label_dir(pattern_dict: Dict[str,str],
-              search_dir: Path,
-              file_type: FileType = FileType.FILE,
-              ignore_case: bool = True,
-              skip_hidden: bool = True) -> Dict[str, str]: ...
 
 @overload
-def label_dir(pattern_dict: Dict[str,str],
-              search_dir: str,
-              file_type: FileType = FileType.FILE,
-              ignore_case: bool = True,
-              skip_hidden: bool = True) -> Dict[str, str]: ...
+def label_dir(
+    pattern_dict: Dict[str, str],
+    search_dir: Path,
+    file_type: FileType = FileType.FILE,
+    ignore_case: bool = True,
+    skip_hidden: bool = True,
+) -> Dict[str, str]: ...
 
-def label_dir(pattern_dict: Dict[str,str],
-              search_dir: Path|str,
-              file_type: FileType = FileType.FILE,
-              ignore_case: bool = True,
-              skip_hidden: bool = True) -> Dict[str, str]:
-    '''
+
+@overload
+def label_dir(
+    pattern_dict: Dict[str, str],
+    search_dir: str,
+    file_type: FileType = FileType.FILE,
+    ignore_case: bool = True,
+    skip_hidden: bool = True,
+) -> Dict[str, str]: ...
+
+
+def label_dir(
+    pattern_dict: Dict[str, str],
+    search_dir: Path | str,
+    file_type: FileType = FileType.FILE,
+    ignore_case: bool = True,
+    skip_hidden: bool = True,
+) -> Dict[str, str]:
+    """
     Given a `pattern_dict` containing search patterns as keys and labels as
     values, return a dictionary of all files or subdirectories (sub-objects) of
     `search_dir` with an associated label. A label `pattern_dict` is applied to
@@ -52,7 +66,7 @@ def label_dir(pattern_dict: Dict[str,str],
         {
             'giga_foo': 'fat', 'baby_bar': 'bat', 'mega_moo': None
         }
-    '''
+    """
 
     if isinstance(search_dir, str):
         root_dir = Path(search_dir).resolve()
@@ -72,7 +86,7 @@ def label_dir(pattern_dict: Dict[str,str],
             continue
         if obj.is_file() and file_type == FileType.DIRECTORY:
             continue
-        if skip_hidden and obj.name.startswith('.'):
+        if skip_hidden and obj.name.startswith("."):
             continue
         obj_label_map[obj.name] = None
 

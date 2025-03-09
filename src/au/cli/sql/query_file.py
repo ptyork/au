@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 
-_query_file_re = re.compile(r'^([^\d]*)?(\d+)?(.*)?(.sql)$')
+_QUERY_FILE_PATTERN = re.compile(r"^([^\d]*)?(\d+)?(.*)?(.sql)$")
+
 
 @dataclass
 class QueryFile:
@@ -23,19 +24,19 @@ class QueryFile:
         if not self.num:
             return self.query_name()
         diff = num_zeros - len(self.num)
-        return self.prefix + '0'*diff + self.num + self.suffix
-    
+        return self.prefix + "0" * diff + self.num + self.suffix
+
     @staticmethod
     def parse(file: Path):
-        match = _query_file_re.search(file.name)
+        match = _QUERY_FILE_PATTERN.search(file.name)
         if not match:
             return None
-        
+
         groups = match.groups()
-        prefix = groups[0] if groups[0] else ''
-        num = groups[1] if groups[1] else ''
-        suffix = groups[2] if groups[2] else ''
-        extension = groups[3] if groups[3] else ''
+        prefix = groups[0] if groups[0] else ""
+        num = groups[1] if groups[1] else ""
+        suffix = groups[2] if groups[2] else ""
+        extension = groups[3] if groups[3] else ""
         return QueryFile(file, prefix, num, suffix, extension)
 
 
@@ -45,7 +46,7 @@ def get_query_files(path: Path) -> List[QueryFile]:
         q = QueryFile.parse(file)
         if q:
             queries.append(q)
-    
+
     if queries:
         max_q_len = max([len(q.num) for q in queries])
         queries.sort(key=lambda q: q.sort_name(max_q_len))

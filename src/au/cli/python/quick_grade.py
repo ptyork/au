@@ -5,83 +5,127 @@ from pprint import pformat
 import click
 from rich.console import Console
 
-from simple_git import get_git_dirs
+from git_wrap import get_git_dirs
 
 from au.click import BasePath, AssignmentOptions, RosterOptions, DebugOptions
 from au.classroom import Assignment, Roster
-from au.tools import draw_double_line, draw_single_line
+from au.common import draw_double_line, draw_single_line
 
 from .eval_assignment import retrieve_student_results, eval_assignment
-from .gen_feedback import gen_feedback, get_summary, ScoringParams, DEFAULT_FEEDBACK_FILE_NAME
+from .gen_feedback import (
+    gen_feedback,
+    get_summary,
+    ScoringParams,
+    DEFAULT_FEEDBACK_FILE_NAME,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.argument("root_dir",type=BasePath(), default='.')
+@click.argument("root_dir", type=BasePath(), default=".")
 @AssignmentOptions().options
-@RosterOptions().options
-@click.option("-se", "--skip_eval", is_flag=True, help="set to bypass running the evaluations")
-@click.option("-sf", "--skip_feedback", is_flag=True, help="set to bypass generating feedback")
-@click.option("--feedback-filename", type=str, default=DEFAULT_FEEDBACK_FILE_NAME, show_default=True,
-              help="name of markdown file to generate")
-@click.option("-o", "--overwrite-feedback", is_flag = True,
-              help="set to override default behavior of not overwriting feedback files")
-@click.option("-max", "--max-score", type=float, default=10, show_default=True,
-              help="the maximum score for this assignment")
-@click.option("-ptw", "--pytest-weight", type=float, default=1.0, show_default=True,
-              help="the weight to apply to pytest when calculating the overall score (0 to 1)")
-@click.option("-plw", "--pylint-weight", type=float, default=0.0, show_default=True,
-              help="the weight to apply to pylint when calculating the overall score (0 to 1)")
+@RosterOptions(prompt=True).options
+@click.option(
+    "-se", "--skip_eval", is_flag=True, help="set to bypass running the evaluations"
+)
+@click.option(
+    "-sf", "--skip_feedback", is_flag=True, help="set to bypass generating feedback"
+)
+@click.option(
+    "--feedback-filename",
+    type=str,
+    default=DEFAULT_FEEDBACK_FILE_NAME,
+    show_default=True,
+    help="name of markdown file to generate",
+)
+@click.option(
+    "-o",
+    "--overwrite-feedback",
+    is_flag=True,
+    help="set to override default behavior of not overwriting feedback files",
+)
+@click.option(
+    "-max",
+    "--max-score",
+    type=float,
+    default=10,
+    show_default=True,
+    help="the maximum score for this assignment",
+)
+@click.option(
+    "-ptw",
+    "--pytest-weight",
+    type=float,
+    default=1.0,
+    show_default=True,
+    help="the weight to apply to pytest when calculating the overall score (0 to 1)",
+)
+@click.option(
+    "-plw",
+    "--pylint-weight",
+    type=float,
+    default=0.0,
+    show_default=True,
+    help="the weight to apply to pylint when calculating the overall score (0 to 1)",
+)
 @DebugOptions().options
-def quick_grade(root_dir: Path,
-                assignment: Assignment = None,
-                roster: Roster = None,
-                skip_eval: bool = False,
-                skip_feedback: bool = False,
-                feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,
-                overwrite_feedback: bool = False,
-                max_score: int = 10,
-                pytest_weight: float = 1.0,
-                pylint_weight: float = 0.0,
-                **kwargs) -> None:
-    '''Run tests and generate feedback for all subdirectories of ROOT_DIR.'''
+def quick_grade(
+    root_dir: Path,
+    assignment: Assignment = None,
+    roster: Roster = None,
+    skip_eval: bool = False,
+    skip_feedback: bool = False,
+    feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,
+    overwrite_feedback: bool = False,
+    max_score: int = 10,
+    pytest_weight: float = 1.0,
+    pylint_weight: float = 0.0,
+    **kwargs,
+) -> None:
+    """Run tests and generate feedback for all subdirectories of ROOT_DIR."""
     logging.basicConfig()
 
-    dir_student_map = None
+    draw_double_line()
+    if assignment:
+        print(assignment)
+    else:
+        logger.error(
+            "Unable to find the requested assignment. Functionality will be limited."
+        )
+    draw_single_line()
 
+    dir_student_map = None
     if roster:
+        print(f"USING ROSTER: {roster.file.resolve()}")
         login_student_map = roster.login_student_map
         logger.debug(pformat(login_student_map))
         dir_student_map = roster.get_dir_student_map(root_dir)
         logger.debug(pformat(dir_student_map))
+    else:
+        print("NOT USING ROSTER")
+
+    draw_single_line()
+    print()
 
     #################################################################
     # TODO: Pull feedback filename and scoring params from settings
 
     scoring_params = ScoringParams(max_score, pytest_weight, pylint_weight)
 
-    draw_single_line()
-
-    if assignment:
-        print(assignment)
-    else:
-        logger.error("Unable to find the requested assignment. Functionality will be limited.")
-
-    draw_single_line()
-    print()
-
     ###############################################################################
     # PROCESS DIRS
     ###############################################################################
 
     console = Console()
-    with console.status(status="Finding assignment directories in {root_dir}", spinner="bouncingBall"):
+    with console.status(
+        status="Finding assignment directories in {root_dir}", spinner="bouncingBall"
+    ):
         student_repos = get_git_dirs(root_dir)
         student_repos.sort()
 
-    print(f'Processing {len(student_repos)} assignment directories')
+    print(f"Processing {len(student_repos)} assignment directories")
 
     for student_repo in student_repos:
 
@@ -111,16 +155,24 @@ def quick_grade(root_dir: Path,
 
             try:
                 scoring_params = ScoringParams(max_score, pytest_weight, pylint_weight)
-                gen_feedback(student_results, student_repo, feedback_filename, scoring_params, overwrite_feedback)
+                gen_feedback(
+                    student_results,
+                    student_repo,
+                    feedback_filename,
+                    scoring_params,
+                    overwrite_feedback,
+                )
             except:
-                logging.exception('An unexpected error occurred generating {student_repo / feedback_filename}')
+                logging.exception(
+                    "An unexpected error occurred generating {student_repo / feedback_filename}"
+                )
 
-                print(f'done generating {feedback_filename}')
+                print(f"done generating {feedback_filename}")
 
         print(get_summary(student_results, scoring_params))
         draw_double_line()
         print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     quick_grade()

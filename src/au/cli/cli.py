@@ -2,15 +2,20 @@ import click
 from au.click import AliasedGroup
 from importlib.metadata import version, PackageNotFoundError
 
-MODULE_NAME = 'au-tools'
+from .classroom.cli import classroom
+from .python.cli import python
+from .sql.cli import sql
 
+
+MODULE_NAME = "au-tools"
 try:
-    __version__ = version(MODULE_NAME)
+    VERSION = version(MODULE_NAME)
 except PackageNotFoundError:
-    __version__ = "undetermined"
+    VERSION = "undetermined"
+
 
 # @click.command(cls=SubdirGroup, file=__file__, module=__package__)
-@click.version_option(__version__)
+@click.version_option(VERSION)
 @click.group(cls=AliasedGroup)
 def main():
     """
@@ -20,25 +25,11 @@ def main():
     and grading assignments using GitHub Classroom.
     """
 
-from .classroom.cli import classroom
+
 main.add_command(classroom)
-
-from .python.cli import python
 main.add_command(python)
-
-from .sql.cli import sql
 main.add_command(sql)
 
-
-# @main.command()
-# @click.argument('name', type=str)
-# def embed2(name: str):
-#     """
-#     Command embedded in cli.py.
-    
-#     Much longer stuff below here.
-#     """
-#     click.echo("Testing a command embedded directly in cli.py")
 
 if __name__ == "__main__":
     main()

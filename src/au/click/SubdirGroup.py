@@ -2,14 +2,11 @@ import click
 import importlib
 from pathlib import Path
 
+
 class SubdirGroup(click.Group):
-    def __init__(self, 
-                 name = None, 
-                 commands = None, 
-                 file='', 
-                 module='', 
-                 cli_file='cli.py', 
-                 **attrs):
+    def __init__(
+        self, name=None, commands=None, file="", module="", cli_file="cli.py", **attrs
+    ):
         self._file = file
         self._module = module
         self._cli_file = cli_file
@@ -19,7 +16,7 @@ class SubdirGroup(click.Group):
         rv = super().list_commands(ctx)
         module_dir = Path(self._file).parent
         for item in module_dir.iterdir():
-            if item.is_dir() and item.name[0] not in '._':
+            if item.is_dir() and item.name[0] not in "._":
                 names = [f.name for f in item.iterdir()]
                 if self._cli_file in names:
                     rv.append(item.name)
@@ -41,8 +38,8 @@ class SubdirGroup(click.Group):
             return cmd
         else:
             try:
-                mod = importlib.import_module(self._module + '.' + real_name)
-                return mod.cli.main 
+                mod = importlib.import_module(self._module + "." + real_name)
+                return mod.cli.main
             except ImportError as ex:
                 ctx.fail(f"Error importing tool module: {ex}")
                 return None
@@ -51,4 +48,3 @@ class SubdirGroup(click.Group):
         # always return the full command name
         _, cmd, args = super().resolve_command(ctx, args)
         return cmd.name, cmd, args
-
