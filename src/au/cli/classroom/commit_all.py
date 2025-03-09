@@ -38,15 +38,9 @@ def commit_all(
     quiet: bool = False,
     debug: bool = False,
 ):
-    """
-    Commit all "dirty" repository subdirectories below a specified directory
+    """Commit all "dirty" repository subdirectories below a specified directory
 
-    \b
-    Required Argument:
-      ROOT_DIR
-        the base directory containing the files subdirectories to be committed
-
-    Iterate over all immediate subdirectories of ROOT-DIR. If it is found to be
+    Iterate over all immediate subdirectories of ROOT_DIR. If it is found to be
     a Git repository and if it contains changes, then:
 
     \b
@@ -54,7 +48,10 @@ def commit_all(
         + commit using --message
         + push all changes to the remote
 
-    If the --message argument is not provided, the script will prompt for one.
+    If ROOT_DIR is not provided, then the current working directory will be
+    assumed.
+
+    If the `--message` argument is not provided, the script will prompt for one.
     """
     logging.basicConfig()
 

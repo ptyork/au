@@ -45,9 +45,12 @@ class AssignmentOptions:
     def options(self, func):
         help_text = "The integer classroom id for the assignment."
         if self.load:
-            help_text += " If not provided, will attempt to find a value in the local classroom settings file. Will prompt for it interactively if not found."
-        else:
-            help_text += " Will prompt for it interactively if not found provided."
+            help_text += (
+                " If not provided, will try to read a value stored in settings."
+            )
+        help_text += " Will prompt for for an assignment interactively if not provided."
+        if self.required:
+            help_text += " An assignment is REQUIRED to run this command."
 
         @click.option("--assignment-id", type=int, help=help_text)
         @functools.wraps(func)

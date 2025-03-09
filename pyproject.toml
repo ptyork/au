@@ -1,7 +1,7 @@
 [project]
 name = "au-tools"
 version = "0.1.4"
-description = "AU - GitHub Classroom Automation Tools"
+description = "au - GitHub Classroom Automation Tools"
 authors = [
     { name = "Paul York", email = "paul@yorkfamily.com" }
 ]

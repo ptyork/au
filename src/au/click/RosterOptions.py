@@ -44,7 +44,13 @@ class RosterOptions:
             "A GitHub Classroom roster file, typically named `classroom_roster.csv`."
         )
         if self.load:
-            help_text += " If not provided, will attempt to find a value in the local classroom settings file."
+            help_text += (
+                " If not provided, will try to read a value stored in settings."
+            )
+        if self.prompt:
+            help_text += " Will prompt for the file if not provided."
+        if self.required:
+            help_text += " A roster is REQUIRED to run this command."
 
         @click.option(
             "--roster",

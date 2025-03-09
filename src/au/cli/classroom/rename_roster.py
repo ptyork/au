@@ -34,48 +34,35 @@ def rename_roster(
     preview: bool = False,
     **kwargs,
 ) -> None:
-    """
-    Rename subdirectories to contain students' real names
+    """Rename subdirectories to contain students' real names.
 
-    \b
-    Required Arguments:
-      ROOT-DIR
-        the base directory containing the files subdirectories to be renamed
-      ROSTER
-        the GitHub Classroom roster file (usually named `classroom_roster.csv`)
+    This is generally only useful if student repositories have already been
+    cloned using other means. This command uses the same naming logic as does
+    `au classroom clone-all`.
 
-    Rename the subdirectories in ROOT-DIR to contain a students real name by
-    matching a the Github ID from the classroom roster to a folder name. Any
-    potentially unsafe characters, as well as commas and spaces, are replaced
-    with an underscore (`_`). Any characters after the matching github id are
-    preserved in order to prevent possible duplicate directory names.
+    This will rename the subdirectories in ROOT_DIR to contain a students real
+    name by matching a the Github ID from the classroom roster to a folder name.
+    Any potentially unsafe characters, as well as commas and spaces, are
+    replaced with an underscore (`_`). Any characters after the matching github
+    id are preserved in order to prevent possible duplicate directory names.
 
     The purpose is to help with finding and sorting directories by the real
     names of students.
 
-    \b
     The resulting name will be:
-        [prefix][real name]@[github id][suffix]/
 
-    \b
-    For example:
-        assn-1-York_Paul@ptyork/
+        [real name]@[github id][suffix]/
 
-    \b
-    And if the --remove-prefix flag is set, the prefix will be removed:
+    \For example:
+
         York_Paul@ptyork/
 
     Directories of students that are not in the roster are skipped entirely. If
     the student's name is found in the directory name, it is likewise skipped as
     it is assumed that the directory has already been renamed.
 
-    \b
-    Windows Example Usage:
-        au classroom rename_roster .\\subfolder\\ .\\classroom_roster.csv
-
-    \b
-    Linux / MacOS Example Usage:
-        python3 gh_rename_roster.py ./subfolder/ ./classroom_roster.csv
+    If ROOT_DIR is not provided, then the current working directory will be
+    assumed.
     """
     logging.basicConfig()
 

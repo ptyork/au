@@ -58,13 +58,8 @@ def clone_all_cmd(
 ):
     """Clone all student repositories for an assignment into ROOT_DIR.
 
-    \b Required Argument:
-      ROOT_DIR
-        the base directory into which assignmetns will be cloned.
-
-    This command will use the specified|selected assignment to query GitHub
-    Classroom for all accepted assignments. For each, it will run the following
-    logic:
+    This command will use the specified assignment to query GitHub Classroom for
+    all accepted assignments. For each, it will run the following logic:
 
     \b
         if repository directory exists in ROOT_DIR
@@ -78,29 +73,24 @@ def clone_all_cmd(
             else
                 skip
 
-    By default, repositories will be named as they are in GitHub. However, to
-    assist with sorting and identification, two additional options are provided.
+    If no roster is provided, directory names will match the students' GitHub
+    login names. If a GitHub Classroom roster is provided using the --roster
+    option and a student name match can be found in the roster, then the
+    directory will be named as follows:
 
-    If a GitHub Classroom roster is provided using the --roster option and a
-    student name match can be found in the roster, then the directory will be
-    named as follows:
-
-        [prefix][student_name]@[login_name]
+        [student_name]@[login_name]
 
     All commas, spaces, and invalid characters in the student name will be
     replaced with underscores. for example:
 
-        hw1-York_Paul@ptyork
+        York_Paul@ptyork
 
-    If the --remove-prefix then the prefix (also called 'slug') will be removed
-    from all assignments, whether or not a roster has been provided. So
-    directory names will either be named:
+    If the `--preserve-prefix` flag is set, then the prefix (also called 'slug')
+    will be added to all assignments, as they are in GitHub. This will insure
+    that all student assignment directory names are unique.
 
-        [login_name]
-
-    or:
-
-        [student_name]@[login_name]
+    If ROOT_DIR is not provided, then the current working directory will be
+    assumed.
     """
     logging.basicConfig()
 

@@ -10,7 +10,7 @@ nav:
     - Python: workflows/python.md
     - SQL: workflows/sql.md
 
-site_name: AU Tools Documentation
+site_name: au - GitHub Classroom Automation Tools
 site_url: https://ptyork.github.io/au/
 repo_url: https://github.com/ptyork/au/
 extra_css:

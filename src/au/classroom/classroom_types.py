@@ -195,21 +195,12 @@ class AcceptedAssignment:
     assignment: Assignment
     repository: Repository
 
-    @staticmethod
-    def get_headers() -> List[str]:
-        return ["ID", "#CMIT", "GITHUB USERNAME", "REPOSITORY"]
-
-    def get_row_cols(self, roster: Roster = None) -> List[str]:
+    @property
+    def login(self):
         if not self.students:
-            student = "NO STUDENT"
+            return None
         else:
-            student = self.students[0].login
-            if roster:
-                name = roster.get_name(student)
-                if name:
-                    student = name
-
-        return [self.id, self.commit_count, student, self.repository.html_url]
+            return self.students[0].login
 
     def as_json(self) -> str:
         return _as_json(self)

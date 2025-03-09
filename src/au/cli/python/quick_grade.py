@@ -84,7 +84,18 @@ def quick_grade(
     pylint_weight: float = 0.0,
     **kwargs,
 ) -> None:
-    """Run tests and generate feedback for all subdirectories of ROOT_DIR."""
+    """Run tests and generate feedback for all subdirectories of ROOT_DIR.
+
+    This is essentially the same as:
+
+    \b
+        for SUBDIR in ROOT_DIR
+            au python eval-assignment SUBDIR
+            au python gen-feedback SUBDIR
+
+    If ROOT_DIR is not provided, then the current working directory will be
+    assumed.
+    """
     logging.basicConfig()
 
     draw_double_line()

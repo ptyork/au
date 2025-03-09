@@ -33,14 +33,13 @@ def time_details(
     late_only: bool = False,
     **kwargs,
 ):
-    """
-    Show all submission time details for assignments in ROOT_DIR.
-
-    If ROOT_DIR is not provided, then the current working directory will be
-    assumed.
+    """Show all submission time details for assignments in ROOT_DIR.
 
     Details include how long the assignment took to complete and how late (if at
     all) an assignment was.
+
+    If ROOT_DIR is not provided, then the current working directory will be
+    assumed.
     """
     logging.basicConfig()
 

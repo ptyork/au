@@ -1,4 +1,4 @@
-# AU - GitHub Classroom Automation Tools
+# `au` - GitHub Classroom Automation Tools
 
 Solid gold tools for automating much of the workflow involved in managing and
 evaluating assignments using GitHub Classroom.
