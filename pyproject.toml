@@ -11,6 +11,7 @@ keywords = [
     "github", "classroom", "autograde", "automation", 
 ]
 requires-python = ">=3.12,<4.0"
+
 dependencies = [
     "pytest (>=8.3.4,<9.0.0)",
     "pytest-subtests (>=0.14.1,<0.15.0)",
@@ -21,6 +22,13 @@ dependencies = [
     "rich (>=13.9.4,<14.0.0)",
     "beaupy (>=3.10.1,<4.0.0)"
 ]
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.6.7"
+mkdocs-click = "^0.8.1"
 
 [project.scripts]
 au = 'au.cli:main'
@@ -36,7 +44,6 @@ packages = [
    { include = "f_table", from = "src" },
    { include = "git_wrap", from = "src" },
 ]
-
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
