@@ -1,7 +1,8 @@
 # `au` - GitHub Classroom Automation Tools
 
-Solid gold tools for automating much of the workflow involved in managing and
-evaluating assignments using GitHub Classroom.
+The gold standard for managing GitHub Classroom assignments at scale. These
+tools help to automate the workflows required to create, administer, evaluate,
+and provide feedback for assignments.
 
 ## Purpose
 

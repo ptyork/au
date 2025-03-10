@@ -56,7 +56,7 @@ def clone_all_cmd(
     preview: bool = False,
     **kwargs,
 ):
-    """Clone all student repositories for an assignment into ROOT_DIR.
+    """Clone all student repos for an assignment into ROOT_DIR.
 
     This command will use the specified assignment to query GitHub Classroom for
     all accepted assignments. For each, it will run the following logic:

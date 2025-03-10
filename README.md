@@ -37,3 +37,19 @@ At present, bespoke tooling is available to support:
 ## Usage
 
 Click to [read the full documentation](https://ptyork.github.io/au/).
+
+## Installation
+
+At present, the only way to install the project is using Python's pip installer:
+```
+pip install au-tools
+```
+or
+```
+pip3 install au-tools
+```
+The tools will make heavy use of both the `git` (Git) and the `gh` (GitHub)
+command line tools. Both must be installed and authenticated prior to use.
+
+For more details read the [installation guide](https://ptyork.github.io/au/install/).
+

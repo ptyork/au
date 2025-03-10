@@ -3,10 +3,9 @@ import sys
 import functools
 import logging
 
-from au.classroom import ClassroomSettings
 from au.classroom import (
+    AssignmentSettings,
     Assignment,
-    Classroom,
     choose_assignment,
     choose_classroom,
     get_assignment,
@@ -33,13 +32,13 @@ class AssignmentOptions:
         base_path = ctx.meta.get("au.base_path")  # Command must use BasePath type
         if base_path and (self.load or self.store):
             try:
-                return ClassroomSettings.get_classroom_settings(base_path)
+                return AssignmentSettings.get_classroom_settings(base_path)
             except:
                 if self.store:
-                    if self.force_store or ClassroomSettings.is_valid_settings_path(
+                    if self.force_store or AssignmentSettings.is_valid_settings_path(
                         base_path
                     ):
-                        return ClassroomSettings(base_path, create=True)
+                        return AssignmentSettings(base_path, create=True)
         return None
 
     def options(self, func):

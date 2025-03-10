@@ -8,8 +8,8 @@ _ASSIGNMENT_ID = "Assignment.assignment_id"
 _ROSTER_FILE = "Classroom.roster_file"
 
 
-class ClassroomSettings(SettingsBase):
-    FILENAME = "classroom.toml"
+class AssignmentSettings(SettingsBase):
+    FILENAME = "assignment.toml"
 
     def __init__(self, settings_doc_path: Path | str, create=False):
         path = Path(settings_doc_path)
@@ -54,12 +54,12 @@ class ClassroomSettings(SettingsBase):
     @staticmethod
     def get_classroom_settings(
         settings_dir: Path | str, create: bool = False
-    ) -> "ClassroomSettings":
+    ) -> "AssignmentSettings":
         path = Path(settings_dir)
         try:
-            return ClassroomSettings(path)
+            return AssignmentSettings(path)
         except FileNotFoundError:
             try:
-                return ClassroomSettings(path.parent)
+                return AssignmentSettings(path.parent)
             except FileNotFoundError:
-                return ClassroomSettings(path, create=create)
+                return AssignmentSettings(path, create=create)

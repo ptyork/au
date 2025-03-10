@@ -2,7 +2,7 @@ import click
 from au.click import AliasedGroup
 from importlib.metadata import version, PackageNotFoundError
 
-from .classroom.cli import classroom
+from .assignment.cli import assignment
 from .python.cli import python
 from .sql.cli import sql
 
@@ -19,14 +19,17 @@ except PackageNotFoundError:
 @click.group(cls=AliasedGroup)
 def main():
     """
-    AU CLASSROOM AUTOMATION TOOLS
+    au - GitHub Classroom Automation Tools
 
-    Solid gold tools for automating much of the workflow involved in managing
-    and grading assignments using GitHub Classroom.
+    The gold standard for managing GitHub Classroom assignments at scale. These
+    tools help to automate the workflows required to create, administer,
+    evaluate, and provide feedback for assignments.
+
+    Homepage: https://ptyork.github.io/au
     """
 
 
-main.add_command(classroom)
+main.add_command(assignment)
 main.add_command(python)
 main.add_command(sql)
 

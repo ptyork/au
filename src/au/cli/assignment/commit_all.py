@@ -38,7 +38,7 @@ def commit_all(
     quiet: bool = False,
     debug: bool = False,
 ):
-    """Commit all "dirty" repository subdirectories below a specified directory
+    """Commit and push all "dirty" student repos in ROOT_DIR.
 
     Iterate over all immediate subdirectories of ROOT_DIR. If it is found to be
     a Git repository and if it contains changes, then:

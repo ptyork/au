@@ -4,7 +4,7 @@ import functools
 import logging
 from pathlib import Path
 
-from au.classroom import ClassroomSettings, Roster
+from au.classroom import AssignmentSettings, Roster
 from au.common import select_file
 from .BasePathType import BASE_PATH_KEY
 
@@ -27,11 +27,11 @@ class RosterOptions:
     def _get_settings(self, base_path):
         if base_path and (self.load or self.store):
             try:
-                return ClassroomSettings.get_classroom_settings(base_path)
+                return AssignmentSettings.get_classroom_settings(base_path)
             except:
                 if self.store:
-                    if ClassroomSettings.is_valid_settings_path(base_path):
-                        return ClassroomSettings(base_path, create=True)
+                    if AssignmentSettings.is_valid_settings_path(base_path):
+                        return AssignmentSettings(base_path, create=True)
         elif self.load or self.store:
             logger.error(
                 "RosterOptions can't be used with store or load if an argument of type BasePath is not also included."

@@ -1,25 +1,46 @@
 nav:
   - Overview:
     - index.md
-    - Installation: install.md
-  - Usage: 
+    - au CLI Installation: install.md
+  - Classroom Workflows:
+    - workflows/index.md
+    - Common Workflows: workflows/common.md
+    - Python Grading Workflows: workflows/python.md
+    - SQL Grading Workflows: workflows/sql.md
+  - Best Practices:
+    - best-practices/index.md
+    - Working with Codespaces: best-practices/codespaces.md
+    - Python Assignments: best-practices/python.md
+    - MySQL/MariaDB Assignments: best-practices/sql.md
+  - References: 
     - references/index.md
     - Command Line Reference: references/cli.md
-  - Assignment Workflows:
-    - workflows/index.md
-    - Python: workflows/python.md
-    - SQL: workflows/sql.md
+  - Tips & Tricks:
+    - tips/index.md
 
 site_name: au - GitHub Classroom Automation Tools
 site_url: https://ptyork.github.io/au/
 repo_url: https://github.com/ptyork/au/
-extra_css:
-  - _assets/extra.css
+
+# extra_css:
+#   - _assets/extra.css
+
 markdown_extensions: 
   - attr_list
   - mkdocs-click
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
 plugins: 
   - search
+
 theme:
   name: material
   # logo: _images/logo.svg
@@ -36,7 +57,9 @@ theme:
     - toc.integrate
     - toc.follow
     - content.code.copy
-  palette:
+    - content.code.annotate
+
+palette:
   
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"

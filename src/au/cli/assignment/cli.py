@@ -5,7 +5,7 @@ from f_table import get_table, BasicScreenStyle
 
 from au.click import AliasedGroup, AssignmentOptions, RosterOptions, BasePath
 from au.classroom import (
-    ClassroomSettings,
+    AssignmentSettings,
     Roster,
     get_classroom,
     choose_classroom,
@@ -20,21 +20,21 @@ from .time_details import time_details
 
 
 @click.group(cls=AliasedGroup)
-def classroom():
-    """Commands for working with GitHub Classroom."""
+def assignment():
+    """Commands for working with any GitHub Classroom Assignment."""
 
 
-classroom.add_command(rename_roster)
-classroom.add_command(commit_all)
-classroom.add_command(clone_all_cmd)
-classroom.add_command(time_details)
+assignment.add_command(rename_roster)
+assignment.add_command(commit_all)
+assignment.add_command(clone_all_cmd)
+assignment.add_command(time_details)
 
 
-@classroom.command()
+@assignment.command()
 @click.argument("assignment_dir", type=BasePath(), default=".")
 @AssignmentOptions(required=True, load=False, store=True, force_store=True).options
 @RosterOptions(load=False, store=True, prompt=True).options
-def configure(assignment_dir, **kwargs):
+def config(assignment_dir, **kwargs):
     """Create or change settings for ASSIGNMENT_DIR.
 
     Most commands that accept configuration parameters such as an assignment-id
@@ -45,36 +45,14 @@ def configure(assignment_dir, **kwargs):
 
     If not specified, ASSIGNMENT_DIR defaults to the current directory.
     """
-    settings = ClassroomSettings(assignment_dir)
+    settings = AssignmentSettings(assignment_dir)
     if settings:
         print(f"Settings saved in {settings.settings_doc_path / settings.FILENAME}")
     else:
         print(f"Error encountered while configuring {assignment_dir}")
 
 
-@classroom.command()
-@click.option(
-    "-c",
-    "--classroom-id",
-    type=int,
-    help="The ID of the classroom to fetch",
-    default=None,
-)
-def open_classroom(classroom_id: int = None):
-    """Open a classroom in the default web browser.
-
-    This command is simply a convenience method for those that work primarily
-    from the command line.
-    """
-    if classroom_id:
-        room = get_classroom(classroom_id)
-    else:
-        room = choose_classroom()
-    if room:
-        click.launch(room.url)
-
-
-@classroom.command()
+@assignment.command()
 @AssignmentOptions(required=True, store=False).options
 def info(assignment):
     """Display details for an assignment.
@@ -89,11 +67,11 @@ def info(assignment):
     print(assignment.as_table())
 
 
-@classroom.command()
+@assignment.command()
 @AssignmentOptions(required=True, store=False).options
 @RosterOptions(required=False, load=False, store=False, prompt=True).options
 def accepted(assignment, roster: Roster):
-    """List accepted assignments for an  assignment."""
+    """List all students that have accepted an  assignment."""
     with Console().status(
         "Retrieving data from GitHub Classroom", spinner="bouncingBall"
     ):
@@ -120,4 +98,4 @@ def accepted(assignment, roster: Roster):
 
 
 if __name__ == "__main__":
-    classroom()
+    assignment()

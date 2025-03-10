@@ -23,9 +23,9 @@ The documentation below is identical to that found by running the the specified
 command with the `--help` switch.
 
 ::: mkdocs-click
-    :module: au.cli.classroom
-    :command: classroom
-    :prog_name: au classroom
+    :module: au.cli.assignment
+    :command: assignment
+    :prog_name: au assignment
     :list_subcommands: true
     :depth: 1
 

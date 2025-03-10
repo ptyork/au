@@ -33,7 +33,7 @@ def time_details(
     late_only: bool = False,
     **kwargs,
 ):
-    """Show all submission time details for assignments in ROOT_DIR.
+    """Show submission times for the assignment in ROOT_DIR.
 
     Details include how long the assignment took to complete and how late (if at
     all) an assignment was.

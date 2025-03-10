@@ -13,6 +13,6 @@ from .classroom_types import AcceptedAssignment
 from .classroom_types import Repository
 from .classroom_types import Student
 
-from .ClassroomSettings import ClassroomSettings
+from .AssignmentSettings import AssignmentSettings
 
 from .Roster import Roster
