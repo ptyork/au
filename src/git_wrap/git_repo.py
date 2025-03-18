@@ -1,7 +1,7 @@
 """Contains the GitRepo class and related utility functions."""
 
 from dataclasses import dataclass
-from typing import Iterable, List
+from typing import Iterable, List, SupportsIndex
 import sys
 from datetime import datetime
 import os
@@ -36,14 +36,24 @@ class Commit:
 class GitRepo:
     """Basic wrapper around git for when GitPython is overkill."""
 
-    def __init__(self, path: Path | str = ".", traverse_parents: bool = False):
+    def __init__(
+        self,
+        path: Path | str = ".",
+        traverse_parents: bool = False,
+        create: bool = False,
+    ):
         path = Path(path).resolve()
         base = GitRepo.get_repository_root(path)
         if base:
             if traverse_parents or base == path:
-                self.root_dir = path
-                self.name = path.name
+                self.root_dir = base
+                self.name = base.name
                 return
+        elif create:
+            self.root_dir = path
+            self.name = path.name
+            self._git("init", "-b", "main")
+            return
         root = " root" if not traverse_parents else ""
         raise NotARepoError(f"{path} is not a valid repository{root}")
 
@@ -51,10 +61,13 @@ class GitRepo:
         return self.name
 
     @staticmethod
-    def git(*args, path: Path | str = Path.cwd()) -> subprocess.CompletedProcess:
+    def git(
+        *args, path: Path | str = Path.cwd(), log_error: bool = True
+    ) -> subprocess.CompletedProcess:
         """Execute a single git command in the provided path."""
         path = Path(path)
-        cmd = ["git", "--no-pager"] + list(args)
+        cmd = ["git", "--no-pager"]
+        cmd.extend(args)
         prev_cwd = os.getcwd()
         try:
             os.chdir(path)
@@ -66,13 +79,14 @@ class GitRepo:
         except KeyboardInterrupt:
             sys.exit(1)
         except subprocess.CalledProcessError as ex:
-            err = f"""
-                COMMAND:    {ex.cmd}
-                CODE:       {ex.returncode}
-                OUTPUT:     {ex.output}
-                STDERR:     {ex.stderr}
-                """
-            logger.error(dedent(err).strip())
+            if log_error:
+                err = f"""
+                    COMMAND:    {ex.cmd}
+                    CODE:       {ex.returncode}
+                    OUTPUT:     {ex.output}
+                    STDERR:     {ex.stderr}
+                    """
+                logger.error(dedent(err).strip())
             raise GitCommandError() from ex
         finally:
             os.chdir(prev_cwd)
@@ -88,7 +102,9 @@ class GitRepo:
         if not path.is_dir():
             raise NotADirectoryError(f"{path} is not a directory")
         try:
-            proc = GitRepo.git("rev-parse", "--show-toplevel", path=path)
+            proc = GitRepo.git(
+                "rev-parse", "--show-toplevel", path=path, log_error=False
+            )
             root = Path(proc.stdout.strip())
             if root.is_dir() and path.exists():
                 return root.resolve()
@@ -144,8 +160,8 @@ class GitRepo:
         except GitCommandError:
             return None
 
-    def _git(self, *args) -> subprocess.CompletedProcess:
-        return GitRepo.git(*args, path=self.root_dir)
+    def _git(self, *args, log_error: bool = True) -> subprocess.CompletedProcess:
+        return GitRepo.git(*args, path=self.root_dir, log_error=log_error)
 
     def is_dirty(self, untracked_files: bool = True) -> bool:
         """Determine if a Git repository contains changed or untracked files."""
@@ -195,9 +211,16 @@ class GitRepo:
             raise ValueError("`messageq` cannot be empty.")
         self._git("commit", "-m", message)
 
-    def push(self):
+    def push(self, remote: str = None, branch: str = None):
         """Push changes to the default Git repository remote."""
-        self._git("push")
+        if not remote:
+            self._git("push")
+        else:
+            if not branch:
+                raise ValueError(
+                    "both remote and branch are required for push --set-upstream <remote> <branch>"
+                )
+            self._git("push", "--set-upstream", remote, branch)
 
     def get_commits(self, limit: int = None, skip: int = None) -> List[Commit]:
         """

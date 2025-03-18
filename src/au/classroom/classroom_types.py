@@ -1,35 +1,19 @@
 from typing import Optional, List
 from dataclasses import dataclass, asdict
-from datetime import date, datetime
+from datetime import datetime
 import json
 from pprint import pformat
 
-from au.classroom import Roster
 from f_table import get_table
 
-from au.common.datetime import date_to_local, get_friendly_local_datetime
+from au.common.datetime import get_friendly_local_datetime
 
-
-def _github_json_serializer(obj):
-    if isinstance(obj, (date, datetime)):
-        dt = date_to_local(obj)
-        return dt.isoformat()
-    raise TypeError(f"Type {type(obj)} not JSON serializable")
-
-
-def _github_json_deserializer(dct):
-    for key, value in dct.items():
-        if isinstance(value, str):
-            try:
-                dct[key] = datetime.fromisoformat(value.replace("Z", "+00:00"))
-            except ValueError:
-                pass
-    return dct
+from .gh import github_json_serializer
 
 
 def _as_json(obj):
     dct = asdict(obj)
-    return json.dumps(dct, default=_github_json_serializer)
+    return json.dumps(dct, default=github_json_serializer)
 
 
 @dataclass

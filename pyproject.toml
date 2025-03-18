@@ -1,6 +1,6 @@
 [project]
 name = "au-tools"
-version = "0.1.5a0"
+version = "0.1.5"
 description = "au - GitHub Classroom Automation Tools"
 authors = [
     { name = "Paul York", email = "paul@yorkfamily.com" }
@@ -20,7 +20,8 @@ dependencies = [
     "dacite (>=1.9.2,<2.0.0)",
     "tomlkit (>=0.13.2,<0.14.0)",
     "rich (>=13.9.4,<14.0.0)",
-    "beaupy (>=3.10.1,<4.0.0)"
+    "beaupy (>=3.10.1,<4.0.0)",
+    "pytest-timeout (>=2.3.1,<3.0.0)"
 ]
 
 [tool.poetry.group.docs]

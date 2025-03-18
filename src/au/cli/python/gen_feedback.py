@@ -163,7 +163,7 @@ def gen_feedback(
                 wl()
                 wl("-" * 80)
                 wl("## Functionality Feedback (pytest)")
-                wl("-" * 80)
+                wl()
                 wl("```")
                 for test_class in pytest_results.test_classes.values():
                     if test_class.is_passing():
@@ -178,7 +178,7 @@ def gen_feedback(
                                 print_test(sub_test)
                         else:
                             print_test(test)
-            wl("```")
+                wl("```")
 
         pylint_results = student_results.get("pylint_results")
         if pylint_results:

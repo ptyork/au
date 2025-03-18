@@ -2,9 +2,10 @@ import click
 from au.click import AliasedGroup
 from importlib.metadata import version, PackageNotFoundError
 
-from .assignment.cli import assignment
-from .python.cli import python
-from .sql.cli import sql
+from .assignment import assignment
+from .python import python
+from .repo import repo
+from .sql import sql
 
 
 MODULE_NAME = "au-tools"
@@ -31,6 +32,7 @@ def main():
 
 main.add_command(assignment)
 main.add_command(python)
+main.add_command(repo)
 main.add_command(sql)
 
 

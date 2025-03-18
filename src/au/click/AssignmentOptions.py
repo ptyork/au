@@ -42,7 +42,7 @@ class AssignmentOptions:
         return None
 
     def options(self, func):
-        help_text = "The integer classroom id for the assignment."
+        help_text = "The integer id for the assignment."
         if self.load:
             help_text += (
                 " If not provided, will try to read a value stored in settings."

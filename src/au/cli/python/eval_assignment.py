@@ -203,10 +203,7 @@ def eval_assignment(
     try:
         # run the tests and report
         pytest.main(
-            [
-                "--tb=no",
-                "-q",
-            ],
+            ["--tb=no", "-q", "--timeout=1"],
             plugins=[pytest_reporter],
         )
 
