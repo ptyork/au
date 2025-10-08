@@ -234,36 +234,44 @@ class GitRepo:
         if skip:
             args.append(f"--skip={skip}")
 
-        proc = self._git(*args)
-        raw_commits = proc.stdout.split("\n--")
         commits: List[Commit] = []
-        for raw_commit in raw_commits:
-            commit_hash = message = date = author_name = author_email = (
-                committer_name
-            ) = None
-            lines = raw_commit.strip().splitlines()
-            if not len(lines) == 6:
-                continue
-            for line in lines:
-                key: str = line[0]
-                val: str = line[2:]
-                match key:
-                    case "h":
-                        commit_hash = val.strip()
-                    case "m":
-                        message = val.strip()
-                    case "d":
-                        date = datetime.fromisoformat(val.strip())
-                    case "a":
-                        author_name = val.strip()
-                    case "e":
-                        author_email = val.strip()
-                    case "c":
-                        committer_name = val.strip()
-            commit = Commit(
-                commit_hash, message, date, author_name, author_email, committer_name
-            )
-            commits.append(commit)
+        try:
+            proc = self._git(*args, log_error=False)
+            raw_commits = proc.stdout.split("\n--")
+            for raw_commit in raw_commits:
+                commit_hash = message = date = author_name = author_email = (
+                    committer_name
+                ) = None
+                lines = raw_commit.strip().splitlines()
+                if not len(lines) == 6:
+                    continue
+                for line in lines:
+                    key: str = line[0]
+                    val: str = line[2:]
+                    match key:
+                        case "h":
+                            commit_hash = val.strip()
+                        case "m":
+                            message = val.strip()
+                        case "d":
+                            date = datetime.fromisoformat(val.strip())
+                        case "a":
+                            author_name = val.strip()
+                        case "e":
+                            author_email = val.strip()
+                        case "c":
+                            committer_name = val.strip()
+                commit = Commit(
+                    commit_hash,
+                    message,
+                    date,
+                    author_name,
+                    author_email,
+                    committer_name,
+                )
+                commits.append(commit)
+        except GitCommandError:
+            pass
         return commits
 
 

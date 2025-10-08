@@ -41,16 +41,20 @@ def get_student_scores(
 def get_summary(
     student_results: Dict, scoring_params: ScoringParams = None, get_markdown=False
 ) -> str:
-    summary_values = [
-        ["Student Name", student_results["name"]],
-        [
-            "Last Commit Date",
-            get_friendly_local_datetime(student_results["commit_date"]),
-        ],
-        ["Last Commit Author", student_results["commiter_name"]],
-        ["Last Commit Message", student_results["commit_message"]],
-        ["Total Commit Count", student_results["num_commits"]],
-    ]
+    summary_values = [["Student Name", student_results["name"]]]
+
+    if "commit_date" in student_results:
+        summary_values.extend(
+            [
+                [
+                    "Last Commit Date",
+                    get_friendly_local_datetime(student_results["commit_date"]),
+                ],
+                ["Last Commit Author", student_results["commiter_name"]],
+                ["Last Commit Message", student_results["commit_message"]],
+                ["Total Commit Count", student_results["num_commits"]],
+            ]
+        )
 
     pytest_weight = ""
     pylint_weight = ""
@@ -66,18 +70,23 @@ def get_summary(
     else:
         scores = get_student_scores(student_results, None)
 
-    summary_values.append(
-        ["Functionality Score", f"{scores.pytest_pct*100:.4g}% {pytest_weight}"],
-    )
-
+    test_classes = []
     try:
         pytest_results = Results.from_dict(student_results.get("pytest_results"))
-        for test_class in pytest_results.test_classes.values():
+        test_classes = pytest_results.test_classes.values()
+    except:
+        pass
+
+    if test_classes:
+        summary_values.append(
+            ["Functionality Score", f"{scores.pytest_pct*100:.4g}% {pytest_weight}"],
+        )
+        for test_class in test_classes:
             tot = len(test_class.tests)
             correct = test_class.pass_count
             summary_values.append([f" + {test_class.name}", f"{correct} out of {tot}"])
-    except:
-        pass
+    else:
+        summary_values.append(["Functionality Score", "N/A"])
 
     summary_values.append(
         ["Code Style Score", f"{scores.pylint_pct*100:.4g}% {pylint_weight}"],

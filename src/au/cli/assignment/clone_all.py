@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 @click.command("clone-all")
 @click.argument("root_dir", type=BasePath(), default=".")
-@AssignmentOptions(required=True).options
-@RosterOptions(prompt=True).options
+@AssignmentOptions(required=True, force_store=True).options
+@RosterOptions(prompt=True, force_store=True).options
 @click.option(
     "--preserve-prefix",
     is_flag=True,
@@ -103,7 +103,7 @@ def clone_all_cmd(
         print("NOT USING ROSTER")
     draw_single_line()
 
-    if not skip_confirm:
+    if not skip_confirm and not preview:
         if not click.confirm(
             f"Are you sure you want to clone the above assignment into {root_dir}?"
         ):
@@ -224,11 +224,14 @@ def clone_all(
                 repo_path = root_dir / dir_name
                 try:
                     GitRepo.clone(repo_url, repo_path)
+                    clones.append(roster.get_name(login))
                 except:
                     logger.exception(
                         f"Exception raised while cloning from {repo_url} into {repo_path}"
                     )
                     errors.append(roster.get_name(login))
+            else:
+                clones.append(roster.get_name(login))
 
         if update:
             for login, dir_name in login_pull_dir_map.items():
@@ -265,7 +268,7 @@ def clone_all(
         summary_rows.append([f"Cloned ({len(clones)})", "\n".join(clones)])
     else:
         summary_rows.append(
-            ["Pulled (0)", "No uncloned repositories for this assignment"]
+            ["Cloned (0)", "No new repositories to clone for this assignment"]
         )
     if pulls:
         pulls.sort()

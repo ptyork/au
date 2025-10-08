@@ -38,6 +38,11 @@ from au.common import get_double_line
     help="Make the repository public (default is private)",
 )
 @click.option(
+    "--template",
+    is_flag=True,
+    help="Make the repository a template (default is false)",
+)
+@click.option(
     "--force-init",
     is_flag=True,
     help="Remove any existing .git/ dir and reinitialize the repo.",
@@ -49,6 +54,7 @@ def create(
     name: str = None,
     gitignore: str = None,
     public: bool = False,
+    template: bool = False,
     force_init: bool = False,
 ):
     """Create a new Git and GitHub repo in PATH.
@@ -90,6 +96,7 @@ def create(
     if not owner:
         if not classroom_id:
             classroom = choose_classroom()
+            print()
             if classroom:
                 classroom_id = classroom.id
         if classroom_id:
@@ -102,10 +109,12 @@ def create(
 
     if not owner:
         print("ERROR: cannot create a GitHub repository without an owner.")
+        sys.exit(1)
 
     # make sure the GitHub repository does not already exist
     if gh_api(f"repos/{owner}/{name}"):
-        print(f"GitHub repository {owner}/{name} already exists")
+        print(f"ERROR: GitHub repository {owner}/{name} already exists")
+        sys.exit(1)
 
     readme_path = path / "README.md"
     gitignore_path = path / ".gitignore"
@@ -113,11 +122,9 @@ def create(
 
     if not gitignore and not gitignore_path.exists():
         # TODO: Change to confirm
-        print(
-            "ERROR: Won't commit a repository without a .gitignore. "
-            "Specify a template using --gitignore or create one manually."
-        )
-        sys.exit(1)
+        print("WARNING: No .gitignore specified or found.")
+        if input("Are you sure you want to continue? (y/N) ").lower() != "y":
+            sys.exit(1)
     elif gitignore and not gitignore_path.exists():
         gitignore_template = gh_api(f"gitignore/templates/{gitignore}")
         if not gitignore_template:
@@ -166,5 +173,24 @@ def create(
         "--push",
     )
 
-    # TODO: Add --make-template flag
-    # gh api --method=PATCH /repos/au-aist2110-25sp-co1/proj01-template -F "is_template=true"
+    if template:
+        gh(
+            "repo",
+            "edit",
+            f"{owner}/{name}",
+            "--template",
+        )
+
+    repo_info = gh_api(f"/repos/{owner}/{name}")
+    if not repo_info:
+        print("ERROR: Unable to retrieve repository information after creation.")
+        sys.exit(1)
+
+    print(f"SUCCESS: GitHub repository created")
+    print("----------------------------------")
+    print(f"Owner:      {repo_info.get("owner", {}).get("login", "(unknown)")}")
+    print(f"Name:       {repo_info.get("name")}")
+    print(f"URL:        {repo_info.get("html_url")}")
+    print(f"Visibility: {repo_info.get("visibility")}")
+    print(f"Template:   {repo_info.get("is_template")}")
+    print()

@@ -16,11 +16,13 @@ class RosterOptions:
         self,
         load: bool = True,
         store: bool = True,
+        force_store: bool = False,
         prompt=False,
         required=False,
     ):
         self.load = load
         self.store = store
+        self.force_store = force_store
         self.prompt = prompt
         self.required = required
 
@@ -30,7 +32,9 @@ class RosterOptions:
                 return AssignmentSettings.get_classroom_settings(base_path)
             except:
                 if self.store:
-                    if AssignmentSettings.is_valid_settings_path(base_path):
+                    if self.force_store or AssignmentSettings.is_valid_settings_path(
+                        base_path
+                    ):
                         return AssignmentSettings(base_path, create=True)
         elif self.load or self.store:
             logger.error(

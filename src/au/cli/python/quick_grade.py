@@ -142,6 +142,11 @@ def quick_grade(
 
         print()
         dir_name = student_repo.name
+
+        if dir_name[0] in "._":
+            print(f"SKIPPING {dir_name}: hidden or special directory")
+            continue
+
         draw_double_line(f"Processing {dir_name}")
 
         student_name = None
@@ -153,7 +158,9 @@ def quick_grade(
             try:
                 student_results = retrieve_student_results(dir_path)
             except:
-                print(f"SKIPPING: No results file found. Have you run the tests yet?")
+                print(
+                    f"SKIPPING: No results file found. Have you run ay python eval-assignment yet?"
+                )
                 continue
         else:
             student_results = eval_assignment(dir_path, student_name, assignment)

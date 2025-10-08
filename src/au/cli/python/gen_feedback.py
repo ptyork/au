@@ -159,13 +159,14 @@ def gen_feedback(
         if pytest_results_d:
             logger.debug("pytest_results: " + pformat(pytest_results_d))
             pytest_results = Results.from_dict(pytest_results_d)
-            if pytest_results.pass_pct < 1:
+            test_classes = pytest_results.test_classes.values()
+            if pytest_results.pass_pct < 1 and test_classes:
                 wl()
                 wl("-" * 80)
                 wl("## Functionality Feedback (pytest)")
                 wl()
                 wl("```")
-                for test_class in pytest_results.test_classes.values():
+                for test_class in test_classes:
                     if test_class.is_passing():
                         continue
                     for test in test_class.tests.values():

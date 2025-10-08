@@ -57,6 +57,7 @@ def retrieve_student_results(student_dir: Path) -> Dict:
 @click.argument("student_dir", type=BasePath(), required=True)
 @AssignmentOptions(store=False).options
 @RosterOptions(store=False, prompt=True).options
+@click.option("--no-git", is_flag=True, help="set to disable git repo checks")
 @click.option(
     "--student-name",
     type=str,
@@ -68,6 +69,7 @@ def eval_assignment_cmd(
     student_dir: Path,
     assignment: Assignment,
     roster: Roster = None,
+    no_git: bool = False,
     student_name: str = None,
     **kwargs,
 ) -> None:
@@ -91,12 +93,17 @@ def eval_assignment_cmd(
     draw_single_line()
     print()
 
+    student_dir = student_dir.resolve()
+
     stu_name = student_name
     if roster and not stu_name:
         login = roster.get_login_for_dir(student_dir)
         stu_name = roster.login_student_map.get(login)
 
-    student_results = eval_assignment(student_dir, stu_name, assignment)
+    if not stu_name:
+        stu_name = student_dir.name
+
+    student_results = eval_assignment(student_dir, stu_name, assignment, no_git)
 
     if student_results:
         draw_single_line(f"Summary Results")
@@ -106,14 +113,21 @@ def eval_assignment_cmd(
 
 
 def eval_assignment(
-    student_dir: Path, student_name: str, assignment: Assignment = None
+    student_dir: Path,
+    student_name: str,
+    assignment: Assignment = None,
+    no_git: bool = False,
 ) -> Dict[str, any]:
     """
     Run automated grading tests on a single student directory.
     """
+    student_dir = student_dir.resolve()
     dir_name = student_dir.name
     os.chdir(student_dir)
     student_results: dict = {}
+
+    if not student_name:
+        student_name = dir_name
 
     student_results["name"] = student_name
     student_results["dir_name"] = dir_name
@@ -125,45 +139,48 @@ def eval_assignment(
     # REPO CHECKS
     ###############################################################################
 
-    console = Console()
-    with console.status(
-        f"Running Git Repository checks for {student_name}", spinner="bouncingBar"
-    ) as status:
-        try:
-            # repo = Repo()
-            repo = GitRepo()
-            assert repo
-        except:
-            logger.error(f"No git repository found in {dir_name}")
-            return None
+    if not no_git:
+        console = Console()
+        with console.status(
+            f"Running Git Repository checks for {student_name}", spinner="bouncingBar"
+        ) as status:
 
-        self_email = GitRepo.get_user_email()
-        commits: list[Commit] = []
-        for commit in repo.get_commits():
-            # Skip the evaluator...best effort
-            if commit.author_email == self_email:
-                continue
-            # First GitHub commit is considered the end of the list of student
-            # commits
-            if commit.committer_name == "GitHub":
-                break
-            commits.append(commit)
+            try:
+                # repo = Repo()
+                repo = GitRepo()
+                assert repo
+            except:
+                logger.error(f"No git repository found in {dir_name}")
+                return None
 
-        student_results["num_commits"] = len(commits)
-        if commits:
-            commit = commits[0]
-            if not student_name:
-                student_results["name"] = commit.author_name
-            student_results["commit_message"] = commit.message.strip()
-            student_results["commiter_name"] = commit.author_name
-            commit_date = commit.date
-            student_results["commit_date"] = commit_date
-            if assignment:
-                past_due = commit_date - assignment.deadline
-                if past_due.total_seconds() > 0:
-                    student_results["past_due"] = get_friendly_timedelta(past_due)
-        else:
-            return None
+            self_email = GitRepo.get_user_email()
+            commits: list[Commit] = []
+            for commit in repo.get_commits():
+                # Skip the evaluator...best effort
+                if commit.author_email == self_email:
+                    continue
+                # First GitHub Classroom  commit is considered the end of the list
+                # of student commits
+                if "github-classroom" in commit.author_name:
+                    break
+                commits.append(commit)
+
+            student_results["num_commits"] = len(commits)
+            if commits:
+                commit = commits[0]
+                if not student_name:
+                    student_results["name"] = commit.author_name
+                student_results["commit_message"] = commit.message.strip()
+                student_results["commiter_name"] = commit.author_name
+                commit_date = commit.date
+                student_results["commit_date"] = commit_date
+                if assignment:
+                    past_due = commit_date - assignment.deadline
+                    if past_due.total_seconds() > 0:
+                        student_results["past_due"] = get_friendly_timedelta(past_due)
+            else:
+                logger.debug("No Commits")
+                return None
 
     ###############################################################################
     # PYTEST
@@ -203,7 +220,8 @@ def eval_assignment(
     try:
         # run the tests and report
         pytest.main(
-            ["--tb=no", "-q", "--timeout=1"],
+            # ["--tb=no", "-q", "--timeout=1"],
+            [],
             plugins=[pytest_reporter],
         )
 
@@ -231,7 +249,6 @@ def eval_assignment(
     ###############################################################################
 
     draw_single_line("pylint")
-    status.update(status=f"Running pylint for {student_name}")
 
     lint_files = []
     lint_filenames = []
