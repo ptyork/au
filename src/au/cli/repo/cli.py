@@ -3,6 +3,7 @@ import click
 from au.click import AliasedGroup
 
 from .create import create
+from .recursive_git import recursive_git
 
 
 @click.command(cls=AliasedGroup)
@@ -12,6 +13,7 @@ def repo():
 
 
 repo.add_command(create)
+repo.add_command(recursive_git)
 
 
 # TODO: Add gh api /gitignore/templates call to list templates

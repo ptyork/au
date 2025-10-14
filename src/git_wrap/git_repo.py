@@ -25,12 +25,12 @@ class GitCommandError(Exception):
 class Commit:
     """Basic dataclass describing a single Git commit."""
 
-    hash: str
-    message: str
-    date: datetime
-    author_name: str
-    author_email: str
-    committer_name: str
+    hash: str | None
+    message: str | None
+    date: datetime | None
+    author_name: str | None
+    author_email: str | None
+    committer_name: str | None
 
 
 class GitRepo:
@@ -63,7 +63,7 @@ class GitRepo:
     @staticmethod
     def git(
         *args, path: Path | str = Path.cwd(), log_error: bool = True
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess | None:
         """Execute a single git command in the provided path."""
         path = Path(path)
         cmd = ["git", "--no-pager"]
@@ -93,7 +93,7 @@ class GitRepo:
         return None
 
     @staticmethod
-    def get_repository_root(path: Path | str) -> Path:
+    def get_repository_root(path: Path | str) -> Path | None:
         """
         Gets the base directory of a Git repository at `path` or None if it is
         not a repository.
@@ -105,7 +105,7 @@ class GitRepo:
             proc = GitRepo.git(
                 "rev-parse", "--show-toplevel", path=path, log_error=False
             )
-            root = Path(proc.stdout.strip())
+            root = Path(proc.stdout.strip())  # type: ignore
             if root.is_dir() and path.exists():
                 return root.resolve()
         except GitCommandError:
@@ -127,7 +127,7 @@ class GitRepo:
         if not path.is_dir():
             raise NotADirectoryError(f"{path} is not a directory")
         root = GitRepo.get_repository_root(path)
-        return root and root == path
+        return root is not None and root == path
 
     @staticmethod
     def clone(source_url: str, dest_dir: Path | str) -> None:
@@ -143,24 +143,26 @@ class GitRepo:
         GitRepo.git("clone", source_url, str(dest_dir))
 
     @staticmethod
-    def get_user_name() -> str:
+    def get_user_name() -> str | None:
         """Retrieve the current user's name from the global git config."""
         try:
             proc = GitRepo.git("config", "--global", "--get", "user.name")
-            return proc.stdout.strip()
+            return proc.stdout.strip()  # type: ignore
         except GitCommandError:
             return None
 
     @staticmethod
-    def get_user_email() -> str:
+    def get_user_email() -> str | None:
         """Retrieve the current user's email from the global git config."""
         try:
             proc = GitRepo.git("config", "--global", "--get", "user.email")
-            return proc.stdout.strip()
+            if proc:
+                return proc.stdout.strip()
         except GitCommandError:
-            return None
+            pass
+        return None
 
-    def _git(self, *args, log_error: bool = True) -> subprocess.CompletedProcess:
+    def _git(self, *args, log_error: bool = True) -> subprocess.CompletedProcess | None:
         return GitRepo.git(*args, path=self.root_dir, log_error=log_error)
 
     def is_dirty(self, untracked_files: bool = True) -> bool:
@@ -169,38 +171,33 @@ class GitRepo:
             proc = self._git("status", "-s")
         else:
             proc = self._git("status", "-s", "-u", "no")
-        output = proc.stdout.strip() + proc.stderr.strip()
-        if output:
+        if proc and (proc.stdout.strip() or proc.stderr.strip()):
             return True
-        else:
-            return False
+        return False
 
     def needs_pull(self) -> bool:
         """Check whether remote is ahead of local."""
         proc = self._git("fetch", "--dry-run")
-        output = proc.stdout.strip() + proc.stderr.strip()
-        if output:
+        if proc and (proc.stdout.strip() or proc.stderr.strip()):
             return True
-        else:
-            return False
+        return False
 
-    def pull(self) -> None:
+    def pull(self) -> bool:
         """Pull changes from the default Git repository remote."""
         proc = self._git("fetch")
-        output = proc.stdout.strip() + proc.stderr.strip()
-        if not output:
+        if proc and (proc.stdout.strip() or proc.stderr.strip()):
             return False
         self._git("merge")
         return True
 
-    def add(self, files: Iterable[Path | str] = None) -> None:
+    def add(self, files: Iterable[Path] | Iterable[str] | None = None) -> None:
         """Run `git add` to stage files. If files is empty, add `.` (all)."""
         args = []
         if files:
             for file in files:
                 file = Path(file)
                 if file.exists() and file.is_relative_to(self.root_dir):
-                    files.append(file.relative_to(self.root_dir))
+                    args.append(file.relative_to(self.root_dir))
         if not args:
             args.append(".")
         self._git("add", *args)
@@ -211,7 +208,7 @@ class GitRepo:
             raise ValueError("`messageq` cannot be empty.")
         self._git("commit", "-m", message)
 
-    def push(self, remote: str = None, branch: str = None):
+    def push(self, remote: str | None = None, branch: str | None = None):
         """Push changes to the default Git repository remote."""
         if not remote:
             self._git("push")
@@ -222,7 +219,9 @@ class GitRepo:
                 )
             self._git("push", "--set-upstream", remote, branch)
 
-    def get_commits(self, limit: int = None, skip: int = None) -> List[Commit]:
+    def get_commits(
+        self, limit: int | None = None, skip: int | None = None
+    ) -> List[Commit]:
         """
         Return commits for the current branch. By default, all will be returned
         as a list. Alternatively a limit (and optionall a skip offset) may be
@@ -237,39 +236,40 @@ class GitRepo:
         commits: List[Commit] = []
         try:
             proc = self._git(*args, log_error=False)
-            raw_commits = proc.stdout.split("\n--")
-            for raw_commit in raw_commits:
-                commit_hash = message = date = author_name = author_email = (
-                    committer_name
-                ) = None
-                lines = raw_commit.strip().splitlines()
-                if not len(lines) == 6:
-                    continue
-                for line in lines:
-                    key: str = line[0]
-                    val: str = line[2:]
-                    match key:
-                        case "h":
-                            commit_hash = val.strip()
-                        case "m":
-                            message = val.strip()
-                        case "d":
-                            date = datetime.fromisoformat(val.strip())
-                        case "a":
-                            author_name = val.strip()
-                        case "e":
-                            author_email = val.strip()
-                        case "c":
-                            committer_name = val.strip()
-                commit = Commit(
-                    commit_hash,
-                    message,
-                    date,
-                    author_name,
-                    author_email,
-                    committer_name,
-                )
-                commits.append(commit)
+            if proc:
+                raw_commits = proc.stdout.split("\n--")
+                for raw_commit in raw_commits:
+                    commit_hash = message = date = author_name = author_email = (
+                        committer_name
+                    ) = None
+                    lines = raw_commit.strip().splitlines()
+                    if not len(lines) == 6:
+                        continue
+                    for line in lines:
+                        key: str = line[0]
+                        val: str = line[2:]
+                        match key:
+                            case "h":
+                                commit_hash = val.strip()
+                            case "m":
+                                message = val.strip()
+                            case "d":
+                                date = datetime.fromisoformat(val.strip())
+                            case "a":
+                                author_name = val.strip()
+                            case "e":
+                                author_email = val.strip()
+                            case "c":
+                                committer_name = val.strip()
+                    commit = Commit(
+                        commit_hash,
+                        message,
+                        date,
+                        author_name,
+                        author_email,
+                        committer_name,
+                    )
+                    commits.append(commit)
         except GitCommandError:
             pass
         return commits

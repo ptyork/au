@@ -49,10 +49,10 @@ from au.common import get_double_line
 )
 def create(
     path: Path,
-    classroom_id: int = None,
-    owner: str = None,
-    name: str = None,
-    gitignore: str = None,
+    classroom_id: int | None = None,
+    owner: str | None = None,
+    name: str | None = None,
+    gitignore: str | None = None,
     public: bool = False,
     template: bool = False,
     force_init: bool = False,
@@ -105,7 +105,8 @@ def create(
             if not classroom:
                 print(f"ERROR: no classroom found with id {classroom_id}.")
                 sys.exit(1)
-            owner = classroom.organization.login
+            if classroom.organization:
+                owner = classroom.organization.login
 
     if not owner:
         print("ERROR: cannot create a GitHub repository without an owner.")

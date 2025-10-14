@@ -73,8 +73,8 @@ logger = logging.getLogger(__name__)
 @DebugOptions().options
 def quick_grade(
     root_dir: Path,
-    assignment: Assignment = None,
-    roster: Roster = None,
+    assignment: Assignment | None = None,
+    roster: Roster | None = None,
     skip_eval: bool = False,
     skip_feedback: bool = False,
     feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,

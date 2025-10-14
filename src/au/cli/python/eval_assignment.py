@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import logging
 import os
 import sys
@@ -68,9 +68,9 @@ def retrieve_student_results(student_dir: Path) -> Dict:
 def eval_assignment_cmd(
     student_dir: Path,
     assignment: Assignment,
-    roster: Roster = None,
+    roster: Roster | None = None,
     no_git: bool = False,
-    student_name: str = None,
+    student_name: str | None = None,
     **kwargs,
 ) -> None:
     """Run automated grading tests on a single student directory."""
@@ -114,10 +114,10 @@ def eval_assignment_cmd(
 
 def eval_assignment(
     student_dir: Path,
-    student_name: str,
-    assignment: Assignment = None,
+    student_name: str | None,
+    assignment: Assignment | None = None,
     no_git: bool = False,
-) -> Dict[str, any]:
+) -> Dict[str, Any] | None:
     """
     Run automated grading tests on a single student directory.
     """
@@ -161,7 +161,7 @@ def eval_assignment(
                     continue
                 # First GitHub Classroom  commit is considered the end of the list
                 # of student commits
-                if "github-classroom" in commit.author_name:
+                if commit.author_name and "github-classroom" in commit.author_name:
                     break
                 commits.append(commit)
 
@@ -170,11 +170,11 @@ def eval_assignment(
                 commit = commits[0]
                 if not student_name:
                     student_results["name"] = commit.author_name
-                student_results["commit_message"] = commit.message.strip()
+                student_results["commit_message"] = commit.message.strip() if commit.message else ""
                 student_results["commiter_name"] = commit.author_name
                 commit_date = commit.date
                 student_results["commit_date"] = commit_date
-                if assignment:
+                if assignment and assignment.deadline and commit_date:
                     past_due = commit_date - assignment.deadline
                     if past_due.total_seconds() > 0:
                         student_results["past_due"] = get_friendly_timedelta(past_due)

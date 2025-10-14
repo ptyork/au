@@ -117,14 +117,17 @@ class Assignment:
     starter_code_repository: Optional[Repository]
 
     def as_table(self) -> str:
+        classroom_name = self.classroom.name if self.classroom else "N/A"
+        classroom_id = self.classroom.id if self.classroom else "N/A"
+        deadline = get_friendly_local_datetime(self.deadline) if self.deadline else "N/A"
         table = get_table(
             [
-                ["Classroom Name", self.classroom.name],
-                ["Classroom ID", self.classroom.id],
+                ["Classroom Name", classroom_name],
+                ["Classroom ID", classroom_id],
                 ["Assignment Title", self.title],
                 ["Short Name (slug)", self.slug],
                 ["Assignment ID", self.id],
-                ["Assignment Deadline", get_friendly_local_datetime(self.deadline)],
+                ["Assignment Deadline", deadline],
                 ["Assignment Type", self.type],
                 ["Assignment Editor", self.editor],
                 ["Assignment is Public", self.public_repo],
@@ -140,11 +143,12 @@ class Assignment:
         return _as_json(self)
 
     def __str__(self):
+        deadline = get_friendly_local_datetime(self.deadline) if self.deadline else "N/A"
         table = get_table(
             [
                 ["Assignment Title", self.title],
                 ["Assignment ID", self.id],
-                ["Deadline", get_friendly_local_datetime(self.deadline)],
+                ["Deadline", deadline],
             ],
             col_defs=["25", ""],
         )

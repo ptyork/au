@@ -1,4 +1,4 @@
-from typing import Iterator, List, Iterable, SupportsIndex, overload
+from typing import Any, Iterator, List, Iterable, SupportsIndex, overload
 from dataclasses import dataclass
 import re
 from textwrap import wrap
@@ -32,7 +32,7 @@ _FORMAT_SPEC_PATTERN = re.compile(
 
 @dataclass
 class ColDef:
-    width: int | None = None
+    width: int = 0
     align: str = "<"
     auto_fill: bool = False
     wrap: bool = True
@@ -49,7 +49,7 @@ class ColDef:
     def get_fallback_format_string(self) -> str:
         return f"{{:{self.align}{self.width}}}"
 
-    def format(self, value: any) -> str:
+    def format(self, value: Any) -> str:
         # "Inner" format
         try:
             format_string = f"{{:{self._format_spec}}}"
@@ -85,11 +85,11 @@ class ColDef:
         align = spec["align"]
         if not align or align == "=":
             align = ""
-        width = spec["width"]
-        if not width:
-            width = None
+        width_str = spec["width"]
+        if not width_str:
+            width = 0
         else:
-            width = int(width)
+            width = int(width_str)
 
         auto_size = False
         wrap_line = True
@@ -186,7 +186,7 @@ class ColDefList(list[ColDef]):
 
     def adjust_to_table(
         self,
-        table_data: List[List[any]],
+        table_data: List[List[Any]],
         table_width: int,
         style: TableStyle,
     ) -> None:
@@ -250,7 +250,7 @@ class ColDefList(list[ColDef]):
             self[col_idx].width = new_width
 
     @staticmethod
-    def assert_valid_table(table: any) -> int:
+    def assert_valid_table(table: Any) -> None:
         if not isinstance(table, (list, tuple)):
             raise ValueError("Table data must be a list or tuple")
         for row in table:
@@ -263,7 +263,7 @@ class ColDefList(list[ColDef]):
                     )
 
     @staticmethod
-    def for_table(table: List[List[any]]) -> "ColDefList":
+    def for_table(table: List[List[Any]]) -> "ColDefList":
         ColDefList.assert_valid_table(table)
         max_cols = max([len(row) for row in table])
         col_defs = ColDefList([ColDef() for _ in range(max_cols)])
@@ -282,10 +282,10 @@ class ColDefList(list[ColDef]):
 
 
 def _get_table_row(
-    values: List[str],
+    values: List[Any],
     style: TableStyle = NoBorderScreenStyle(),
-    col_defs: List[str | ColDef] | ColDefList = None,
-    table_width: int = None,
+    col_defs: List[str | ColDef] | ColDefList | None = None,
+    table_width: int = 0,
     lazy_end: bool = False,
     is_header: bool = False,
 ) -> str:
@@ -366,10 +366,10 @@ def _get_table_row(
 
 
 def get_table_row(
-    values: List[str],
+    values: List[Any],
     style: TableStyle = NoBorderScreenStyle(),
-    col_defs: List[str | ColDef] | ColDefList = None,
-    table_width: int = None,
+    col_defs: List[str | ColDef] | ColDefList | None = None,
+    table_width: int = 0,
     lazy_end: bool = True,
 ) -> str:
     return _get_table_row(
@@ -390,9 +390,9 @@ def get_table_row(
 def get_table_header(
     header_cols: List[str],
     style: TableStyle = NoBorderScreenStyle(),
-    header_defs: List[str | ColDef] | ColDefList = None,
-    col_defs: List[str | ColDef] | ColDefList = None,
-    table_width: int = None,
+    header_defs: List[str | ColDef] | ColDefList | None = None,
+    col_defs: List[str] | List[ColDef] | ColDefList | None = None,
+    table_width: int = 0,
     lazy_end: bool = True,
 ) -> str:
     if not table_width and style.terminal_style:
@@ -407,10 +407,12 @@ def get_table_header(
     _header_defs.adjust_to_table([header_cols], table_width, style)
 
     if not col_defs:
-        col_defs = _header_defs.copy()
+        _col_defs = _header_defs.copy()
+    else:
+        _col_defs = ColDefList(col_defs)
 
     lazy_end = lazy_end and style.allow_lazy_header
-    padding = 2 * style.cell_padding
+    padding_width = 2 * style.cell_padding
 
     lines = []
     if style.top_border:
@@ -418,7 +420,7 @@ def get_table_header(
         delim = str(style.header_top_delimiter)
         left = str(style.header_top_left)
         right = line if lazy_end else str(style.header_top_right)
-        border_lines = [line * (col.width + padding) for col in col_defs]
+        border_lines = [line * (col.width + padding_width) for col in _col_defs]
         border = delim.join(border_lines)
         border = left + border + right
         lines.append(border)
@@ -441,10 +443,10 @@ def get_table_header(
     for col_idx in range(len(header_cols)):
         header_def = _header_defs[col_idx]
         col_def = None
-        if col_idx < len(col_defs):
-            col_def = col_defs[col_idx]
+        if col_idx < len(_col_defs):
+            col_def = _col_defs[col_idx]
         if not style.align_char:
-            h_line = line * (header_def.width + padding)
+            h_line = line * (header_def.width + padding_width)
         else:
             h_line = line * header_def.width
             if col_def and col_def.align == "^":
@@ -467,12 +469,12 @@ def get_table_header(
 
 
 def get_table(
-    value_rows: List[List[str]],
-    header_row: List[str] = None,
+    value_rows: List[List[Any]],
+    header_row: List[str] | None = None,
     style: TableStyle = NoBorderScreenStyle(),
-    col_defs: List[str | ColDef] | ColDefList = None,
-    header_defs: List[str | ColDef] | ColDefList = None,
-    table_width: int = None,
+    col_defs: List[str | ColDef] | ColDefList | None = None,
+    header_defs: List[str | ColDef] | ColDefList | None = None,
+    table_width: int = 0,
     lazy_end: bool = False,
     separete_rows: bool = False,
 ) -> str:
@@ -486,6 +488,8 @@ def get_table(
 
     if not table_width and style.terminal_style:
         table_width = get_term_width()
+
+    padding_width = 2 * style.cell_padding
 
     all_rows = value_rows.copy()
     if header_row:
@@ -503,6 +507,7 @@ def get_table(
         header_row = [""] * len(_col_defs)
 
     # generate viable header definitions
+    real_header_defs = None
     if header_row:
         real_header_defs = ColDefList()
         for col_def in _col_defs:
@@ -535,11 +540,12 @@ def get_table(
             delim = str(style.no_header_top_delimiter)
             left = str(style.no_header_top_left)
             right = line if lazy_end else str(style.no_header_top_right)
-            border_lines = [line * (col.width + 2) for col in _col_defs]
+            border_lines = [line * (col.width + padding_width) for col in _col_defs]
             border = delim.join(border_lines)
             border = left + border + right
             output_rows.append(border)
 
+    # Add Value Rows
     rowcount = 0
     for values in value_rows:
         rowcount += 1
@@ -552,25 +558,25 @@ def get_table(
             lazy_end=lazy_end,
         )
         output_rows.append(row)
+
+        # Optionally add Separators Between Rows
         if not lastrow and separete_rows and style.row_separator_line:
-            sep_lines = []
+            line = str(style.row_separator_line)
             left = str(style.row_separator_left)
             right = line if lazy_end else str(style.row_separator_right)
             delim = str(style.row_separator_delimiter)
-            padding = 2 * style.cell_padding
-            for col_def in _col_defs:
-                sep_line = str(style.row_separator_line) * (col_def.width + padding)
-                sep_lines.append(sep_line)
+            sep_lines = [line * (col.width + padding_width) for col in _col_defs]
             separator = delim.join(sep_lines)
             separator = left + separator + right
             output_rows.append(separator)
 
+    # Add Bottom Border
     if style.bottom_border:
         line = str(style.values_bottom_line)
         delim = str(style.values_bottom_delimiter)
         left = str(style.values_bottom_left)
         right = line if lazy_end else str(style.values_bottom_right)
-        border_lines = [line * (col.width + 2) for col in _col_defs]
+        border_lines = [line * (col.width + padding_width) for col in _col_defs]
         border = delim.join(border_lines)
         border = left + border + right
         output_rows.append(border)

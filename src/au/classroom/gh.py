@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import subprocess
 import json as json_module
 from pprint import pformat
@@ -11,7 +11,7 @@ from au.common.datetime import date_to_local
 logger = logging.getLogger(__name__)
 
 
-def github_json_serializer(obj):
+def github_json_serializer(obj: Any) -> str:
     if isinstance(obj, (date, datetime)):
         dt = date_to_local(obj)
         return dt.isoformat()
@@ -35,11 +35,11 @@ def gh(*args) -> subprocess.CompletedProcess:
 
 
 def gh_api(
-    endpoint: str = None,
-    method: str = None,
-    query: str = None,
+    endpoint: str | None = None,
+    method: str | None = None,
+    query: str | None = None,
     **kwargs,
-) -> Dict[str, any]:
+) -> Dict[str, Any] | None:
     if query and endpoint and endpoint != "graphql":
         raise ValueError("If query is provided, the endpoint must be 'graphql'")
     elif query:
