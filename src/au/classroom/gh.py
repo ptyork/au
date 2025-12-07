@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any
 import subprocess
 import json as json_module
 from pprint import pformat
@@ -39,7 +39,7 @@ def gh_api(
     method: str | None = None,
     query: str | None = None,
     **kwargs,
-) -> Dict[str, Any] | None:
+) -> dict[str, Any] | None:
     if query and endpoint and endpoint != "graphql":
         raise ValueError("If query is provided, the endpoint must be 'graphql'")
     elif query:

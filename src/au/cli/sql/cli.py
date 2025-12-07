@@ -1,18 +1,21 @@
 from pathlib import Path
 from pydoc import pager
 
+from au.cli.repo import create
 import click
 
 from au.click import AliasedGroup, BasePath
 from au.common import get_double_line
 
 from .query_file import get_query_files
-
+from .gen_props import gen_props_cmd
 
 @click.command(cls=AliasedGroup)
 def sql():
     """Commands for working with SQL assignments."""
     pass
+
+sql.add_command(gen_props_cmd)
 
 
 @sql.command()

@@ -1,4 +1,3 @@
-from typing import List, Dict
 from dataclasses import dataclass, field, asdict
 from enum import Enum, auto
 import json
@@ -83,7 +82,7 @@ class Test:
     message: str|None = None
     output: str|None = None
     duration: float = 0.0
-    sub_tests: List[SubTest] = field(default_factory=list)
+    sub_tests: list[SubTest] = field(default_factory=list)
     pass_pct: float = 1.0
 
     def _update(self):
@@ -135,7 +134,7 @@ class Test:
 class TestClass:
     name: str
     status: Status = Status.PASS
-    tests: Dict[str, Test] = field(default_factory=dict)
+    tests: dict[str, Test] = field(default_factory=dict)
     pass_pct: float = 1.0
     pass_count: int = 0
 
@@ -168,7 +167,7 @@ class Results:
 
     status: Status = Status.PASS
     message: str|None = None
-    test_classes: Dict[str, TestClass] = field(default_factory=dict)
+    test_classes: dict[str, TestClass] = field(default_factory=dict)
     pass_pct: float = 1.0
 
     def get_test(self, nodeid: str):
@@ -214,6 +213,6 @@ class Results:
         return json.dumps(results, indent=2)
     
     @staticmethod
-    def from_dict(results_d: Dict[str, any]) -> 'Results':
+    def from_dict(results_d: dict[str, any]) -> 'Results':
         return from_dict(Results, results_d, config=Config(cast=[Enum]))
     

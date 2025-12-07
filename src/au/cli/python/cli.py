@@ -6,6 +6,7 @@ from .eval_assignment import eval_assignment_cmd
 from .gen_feedback import gen_feedback_cmd
 from .gen_grades_csv import gen_grades_csv_cmd
 from .quick_grade import quick_grade
+from .settings import settings_cmd
 
 
 @click.group(cls=AliasedGroup)
@@ -17,6 +18,7 @@ python.add_command(eval_assignment_cmd)
 python.add_command(gen_feedback_cmd)
 python.add_command(gen_grades_csv_cmd)
 python.add_command(quick_grade)
+python.add_command(settings_cmd)
 
 
 if __name__ == "__main__":

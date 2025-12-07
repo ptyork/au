@@ -1,4 +1,3 @@
-from typing import Dict
 import logging
 import re
 from pathlib import Path
@@ -12,6 +11,7 @@ from au.click import BasePath, DebugOptions
 from .eval_assignment import retrieve_student_results
 from .pytest_data import Results, Test, SubTest
 from .scoring import get_summary, get_summary_row, get_student_scores, ScoringParams
+from .types import StudentResults, PylintMessage
 
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ def gen_feedback_cmd(
 
 
 def gen_feedback(
-    student_results: Dict[str, any],
+    student_results: StudentResults,
     student_dir: Path,
     feedback_filename: str = DEFAULT_FEEDBACK_FILE_NAME,
     scoring_params: ScoringParams = ScoringParams(),
@@ -190,7 +190,7 @@ def gen_feedback(
             wl()
             wl("```")
             messages = pylint_results.get("messages", [])
-            msg: Dict
+            msg: PylintMessage
             for msg in messages:
                 path = msg.get("path", "General Message")
                 line = msg.get("line", 0)

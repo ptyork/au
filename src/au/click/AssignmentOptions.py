@@ -32,7 +32,7 @@ class AssignmentOptions:
         base_path = ctx.meta.get("au.base_path")  # Command must use BasePath type
         if base_path and (self.load or self.store):
             try:
-                return AssignmentSettings.get_classroom_settings(base_path)
+                return AssignmentSettings.get_assignment_settings(base_path)
             except:
                 if self.store:
                     if self.force_store or AssignmentSettings.is_valid_settings_path(

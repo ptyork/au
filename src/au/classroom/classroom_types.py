@@ -1,10 +1,11 @@
-from typing import Optional, List
+from __future__ import annotations
+
 from dataclasses import dataclass, asdict
 from datetime import datetime
 import json
 from pprint import pformat
 
-from f_table import get_table
+from craftable import get_table
 
 from au.common.datetime import get_friendly_local_datetime
 
@@ -16,14 +17,14 @@ def _as_json(obj):
     return json.dumps(dct, default=github_json_serializer)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Organization:
     id: int
     login: str
-    node_id: Optional[str]
-    html_url: Optional[str]
-    name: Optional[str]
-    avatar_url: Optional[str]
+    node_id: str | None
+    html_url: str | None
+    name: str | None
+    avatar_url: str | None
 
     def as_table(self) -> str:
         return get_table(
@@ -42,13 +43,13 @@ class Organization:
         return self.as_table()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Classroom:
     id: int
     name: str
     url: str
     archived: bool
-    organization: Optional[Organization]
+    organization: Organization | None
 
     def as_table(self) -> str:
         table = get_table(
@@ -61,7 +62,7 @@ class Classroom:
             col_defs=["25", ""],
         )
         if self.organization:
-            table += "\n" + self.organization.as_table()
+            table += f"\n{self.organization.as_table()}"
         return table
 
     def as_json(self) -> str:
@@ -77,7 +78,7 @@ class Classroom:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Repository:
     id: int
     name: str
@@ -94,27 +95,27 @@ class Repository:
         return pformat(self)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Assignment:
     id: int
     title: str
-    slug: Optional[str]
-    deadline: Optional[datetime]
-    accepted: Optional[int]
-    submissions: Optional[int]
-    passing: Optional[int]
-    invite_link: Optional[str]
-    type: Optional[str]
-    editor: Optional[str]
-    public_repo: Optional[bool]
-    invitations_enabled: Optional[bool]
-    students_are_repo_admins: Optional[bool]
-    feedback_pull_requests_enabled: Optional[bool]
-    max_teams: Optional[int]
-    max_members: Optional[int]
-    language: Optional[str]
-    classroom: Optional[Classroom]
-    starter_code_repository: Optional[Repository]
+    slug: str | None
+    deadline: datetime | None
+    accepted: int | None
+    submissions: int | None
+    passing: int | None
+    invite_link: str | None
+    type: str | None
+    editor: str | None
+    public_repo: bool | None
+    invitations_enabled: bool | None
+    students_are_repo_admins: bool | None
+    feedback_pull_requests_enabled: bool | None
+    max_teams: int | None
+    max_members: int | None
+    language: str | None
+    classroom: Classroom | None
+    starter_code_repository: Repository | None
 
     def as_table(self) -> str:
         classroom_name = self.classroom.name if self.classroom else "N/A"
@@ -153,15 +154,15 @@ class Assignment:
             col_defs=["25", ""],
         )
         if self.classroom:
-            table = str(self.classroom) + "\n" + table
+            table = f"{self.classroom}\n{table}"
         return table
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Student:
     id: int
     login: str
-    name: Optional[str]
+    name: str | None
     avatar_url: str
     html_url: str
 
@@ -172,19 +173,19 @@ class Student:
         return pformat(self)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AcceptedAssignment:
     id: int
     submitted: bool
     passing: bool
     commit_count: int
-    grade: Optional[str]
-    students: List[Student]
+    grade: str | None
+    students: list[Student]
     assignment: Assignment
     repository: Repository
 
     @property
-    def login(self):
+    def login(self) -> str | None:
         if not self.students:
             return None
         else:

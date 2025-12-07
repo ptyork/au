@@ -1,4 +1,3 @@
-from typing import List
 import logging
 import sys
 from pathlib import Path
@@ -7,7 +6,8 @@ from pprint import pformat
 import click
 from rich.console import Console
 
-from f_table import get_table, BasicScreenStyle
+from craftable import get_table
+from craftable.styles import BasicScreenStyle
 from git_wrap import GitRepo, get_git_dirs
 
 from au.classroom import Assignment, Roster, get_accepted_assignments
@@ -208,10 +208,10 @@ def clone_all(
         for login in login_bad_dir_map:
             login_clone_dir_map.pop(login, None)
 
-        clones: List[str] = []
-        pulls: List[str] = []
-        skips: List[str] = []
-        errors: List[str] = []
+        clones: list[str] = []
+        pulls: list[str] = []
+        skips: list[str] = []
+        errors: list[str] = []
 
         logger.debug("login_clone_dir_map: " + pformat(login_clone_dir_map))
         logger.debug("login_pull_dir_map" + pformat(login_all_dir_map))
@@ -293,7 +293,7 @@ def clone_all(
         errors.sort()
         summary_rows.append([f"Errors ({len(errors)})", "\n".join(errors)])
 
-    print(get_table(summary_rows, style=BasicScreenStyle(), separete_rows=True))
+    print(get_table(summary_rows, style=BasicScreenStyle(), separate_rows=True))
 
 
 if __name__ == "__main__":

@@ -1,18 +1,16 @@
 import click
 from rich.console import Console
 
-from f_table import get_table, BasicScreenStyle
+from craftable import get_table
+from craftable.styles import BasicScreenStyle
 
 from au.click import AliasedGroup, AssignmentOptions, RosterOptions, BasePath
 from au.classroom import (
-    AssignmentSettings,
     Roster,
-    get_classroom,
-    choose_classroom,
     get_accepted_assignments,
-    AcceptedAssignment,
 )
 
+from .settings import settings_cmd
 from .rename_roster import rename_roster
 from .commit_all import commit_all
 from .clone_all import clone_all_cmd
@@ -24,33 +22,11 @@ def assignment():
     """Commands for working with any GitHub Classroom Assignment."""
 
 
+assignment.add_command(settings_cmd)
 assignment.add_command(rename_roster)
 assignment.add_command(commit_all)
 assignment.add_command(clone_all_cmd)
 assignment.add_command(time_details)
-
-
-@assignment.command()
-@click.argument("assignment_dir", type=BasePath(), default=".")
-@AssignmentOptions(required=True, load=False, store=True, force_store=True).options
-@RosterOptions(load=False, store=True, prompt=True).options
-def config(assignment_dir, **kwargs):
-    """Create or change settings for ASSIGNMENT_DIR.
-
-    Most commands that accept configuration parameters such as an assignment-id
-    or roster file will save this to a local configuration file. However, this
-    command is useful if you need to change the settings or if you are
-    pre-configuring an assignment directory prior to cloning student
-    submissions.
-
-    If not specified, ASSIGNMENT_DIR defaults to the current directory.
-    """
-    settings = AssignmentSettings(assignment_dir)
-    if settings:
-        print(f"Settings saved in {settings.settings_doc_path / settings.FILENAME}")
-    else:
-        print(f"Error encountered while configuring {assignment_dir}")
-
 
 @assignment.command()
 @AssignmentOptions(required=True, store=False).options

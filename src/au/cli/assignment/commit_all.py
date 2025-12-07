@@ -5,7 +5,8 @@ import logging
 import click
 from rich.console import Console
 
-from f_table import BasicScreenStyle, get_table
+from craftable import get_table
+from craftable.styles import BasicScreenStyle
 from git_wrap import get_git_repos
 
 from au.click import DebugOptions, BasePath

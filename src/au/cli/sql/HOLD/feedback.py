@@ -271,7 +271,7 @@ for query_name, expected_props in queries.items():
                         # Next, if table.field notation is used, we can be
                         # certain to choose the right column
                         if exp_col_field and stu_col_field:
-                            if exp_col_field == stu_col_field and exp_col_table == stu_col_table:
+                            if lower(exp_col_field) == lower(stu_col_field) and lower(exp_col_table) == lower(stu_col_table):
                                 logger.debug(f'- FIELD MATCH: {exp_col_table}.{exp_col_field} == {stu_col_table}.{stu_col_field} ({exp_col_name})')
                                 col_map[i] = j
                                 
@@ -285,7 +285,7 @@ for query_name, expected_props in queries.items():
                                 break
                             else:
                                 continue
-                                                    # if the col names match, then just assume we've found a
+
                         # Find exact name matches
                         if exp_col_name and lower(exp_col_name) == lower(stu_col_name):
                             logger.debug(f'+ EXACT COLUMN: {exp_col_name} == {stu_col_name}')
@@ -362,7 +362,7 @@ for query_name, expected_props in queries.items():
                             stu_col_func = lower(match.group('name'))
 
                         # if the funcs match, then we'll also assume a match
-                        logger.debug(exp_col_func, stu_col_func)
+                        logger.debug(f"col_funcs: {exp_col_func} {stu_col_func}")
                         if exp_col_func and exp_col_func == stu_col_func:
                             logger.debug(f'- FUNC MATCH: {exp_col_func} = {stu_col_func} ({exp_col_name})')
                             col_map[i] = j

@@ -1,4 +1,3 @@
-from typing import Dict, List
 from pathlib import Path
 import logging
 import re
@@ -12,11 +11,11 @@ _invalid_name_char_pattern = re.compile(r'([<>:"\/\\\,|?*]|\s)+')
 
 
 class Roster:
-    def __init__(self, source: Path | List):
+    def __init__(self, source: Path | list):
         if isinstance(source, Path):
             if source and source.exists():
                 source = source.resolve()
-                self.login_student_map: Dict[str, str] = dict_from_csv(
+                self.login_student_map: dict[str, str] = dict_from_csv(
                     source, "github_username", "identifier"
                 )
                 for login in self.login_student_map:
@@ -27,14 +26,14 @@ class Roster:
                 raise FileNotFoundError(f"Roster file {source} not found.")
         elif isinstance(source, list):
             # source will be a list of logins or repository names, so just make the name and login the same
-            self.login_student_map: Dict[str, str] = {str(v): str(v) for v in source}
+            self.login_student_map: dict[str, str] = {str(v): str(v) for v in source}
         else:
             raise ValueError(str(source), "is not a valid roster source")
 
-    def get_logins(self) -> List[str]:
+    def get_logins(self) -> list[str]:
         return list(self.login_student_map.keys())
 
-    def get_names(self) -> List[str]:
+    def get_names(self) -> list[str]:
         return list(self.login_student_map.values())
 
     def get_name(self, login: str) -> str:
@@ -55,9 +54,9 @@ class Roster:
             student = name if name else login
             self.login_student_map[login] = student
 
-    def get_dir_names(self, prefix: str = None) -> Dict[str, str]:
+    def get_dir_names(self, prefix: str = None) -> dict[str, str]:
         """Get friendly directory names for each student."""
-        login_dir_name_map: Dict[str, str] = {}
+        login_dir_name_map: dict[str, str] = {}
         prefix = prefix if prefix else ""
         for login, student_name in self.login_student_map.items():
             if student_name != login:
@@ -70,8 +69,8 @@ class Roster:
 
     @staticmethod
     def _get_dirs_from_source(
-        dir_source: Path | List[any], sort_by_size=False
-    ) -> List[str]:
+        dir_source: Path | list[any], sort_by_size=False
+    ) -> list[str]:
         if isinstance(dir_source, Path):
             dirs: list[str] = []
             for subdir in dir_source.iterdir():
@@ -95,8 +94,8 @@ class Roster:
         return dirs
 
     def get_login_dir_map(
-        self, dir_source: Path | List[str], include_unmapped=False
-    ) -> Dict[str, str | None]:
+        self, dir_source: Path | list[str], include_unmapped=False
+    ) -> dict[str, str | None]:
         """
         Map student logins to subdirectories or root_dir.
 
@@ -105,7 +104,7 @@ class Roster:
         """
         logins = list(self.login_student_map.keys())
         logins.sort(key=lambda l: len(l), reverse=True)
-        login_dir_map: Dict[str, str | None] = {}
+        login_dir_map: dict[str, str | None] = {}
         if include_unmapped:
             login_dir_map = {k: None for k in logins}
         subdirs = Roster._get_dirs_from_source(dir_source)
@@ -116,7 +115,7 @@ class Roster:
                     break
         return login_dir_map
 
-    def get_dir_login_map(self, dir_source: Path | List[str]) -> Dict[str, str | None]:
+    def get_dir_login_map(self, dir_source: Path | list[str]) -> dict[str, str | None]:
         """
         Map subdirectories of root_dir to student logins.
 
@@ -124,7 +123,7 @@ class Roster:
         will be mapped to a matching login.
         """
         subdirs = Roster._get_dirs_from_source(dir_source)
-        dir_login_map: Dict[str, str | None] = {}
+        dir_login_map: dict[str, str | None] = {}
         logins = list(self.login_student_map.keys())
         logins.sort(key=lambda l: len(l), reverse=True)
         for subdir in subdirs:
@@ -135,14 +134,14 @@ class Roster:
         return dir_login_map
 
     def get_dir_student_map(
-        self, dir_source: Path | List[str]
-    ) -> Dict[str, str | None]:
+        self, dir_source: Path | list[str]
+    ) -> dict[str, str | None]:
         """
         Just a convenience method to map dirs directly to student names instead
         of logins.
         """
         dir_login_map = self.get_dir_login_map(dir_source)
-        dir_student_map: Dict[str, str | None] = {}
+        dir_student_map: dict[str, str | None] = {}
         for dirname, login in dir_login_map.items():
             student = None
             if login:

@@ -47,6 +47,36 @@ are installed in your environment of choice. For example:
     sudo apt install gh
     ```
 
+### Additional System Dependencies for Database Support
+
+If you plan to use the SQL database features (MySQL/MariaDB, PostgreSQL, or
+Microsoft SQL Server), you'll need to install additional system-level packages:
+
+=== "Ubuntu/Debian"
+    
+    If you are having compilation issues you may need to install libpq-dev:
+    
+    ``` bash
+    sudo apt update
+    sudo apt install libpq-dev
+    ```
+
+    **Note:** Microsoft SQL Server support (`mssql-python`) may require additional system dependencies on some Linux distributions. If you encounter installation issues, please refer to the [official mssql-python installation guide](https://github.com/microsoft/mssql-python#installation).
+
+=== "MacOS"
+    Using [Homebrew](https://brew.sh):
+    ``` bash
+    # For PostgreSQL support (optional, only if having compilation issues)
+    brew install postgresql
+    ```
+
+    **Note:** Microsoft SQL Server support (`mssql-python`) may require additional system dependencies. If you encounter installation issues, please refer to the [official mssql-python installation guide](https://github.com/microsoft/mssql-python#installation).
+
+=== "Windows 11"
+    Windows typically doesn't require additional system packages for PostgreSQL or Microsoft SQL Server support.
+
+    **Note:** If you encounter installation issues with `mssql-python`, please refer to the [official mssql-python installation guide](https://github.com/microsoft/mssql-python#installation).
+
 ### Configure `git`
 
 If you've never configured the `git` CLI tool, now is the time. You must
@@ -114,7 +144,7 @@ should run something similar to the following to install `pipx`.
     Assuming `pip` is installed (substitute `pip3` if appropriate):
     ``` bash
     pip install pipx
-    pipx ensurepath
+    pipx ensurepath```
     ```
 === "Ubuntu (>= 23.04)"
     ``` bash

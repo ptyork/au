@@ -1,4 +1,3 @@
-from typing import List
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -40,8 +39,8 @@ class QueryFile:
         return QueryFile(file, prefix, num, suffix, extension)
 
 
-def get_query_files(path: Path) -> List[QueryFile]:
-    queries: List[QueryFile] = []
+def get_query_files(path: Path) -> list[QueryFile]:
+    queries: list[QueryFile] = []
     for file in path.iterdir():
         q = QueryFile.parse(file)
         if q:

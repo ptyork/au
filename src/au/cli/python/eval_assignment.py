@@ -1,4 +1,3 @@
-from typing import Dict, Any
 import logging
 import os
 import sys
@@ -24,6 +23,7 @@ from au.common.datetime import get_friendly_timedelta
 
 from .pytest_reporter import PytestResultsReporter
 from .scoring import get_summary
+from .types import StudentResults
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def _json_serialize(obj):
         return obj.isoformat()
 
 
-def _json_deserialize_hook(dct: Dict):
+def _json_deserialize_hook(dct: dict):
     for key, value in dct.items():
         if isinstance(value, str):
             try:
@@ -47,7 +47,7 @@ def _json_deserialize_hook(dct: Dict):
     return dct
 
 
-def retrieve_student_results(student_dir: Path) -> Dict:
+def retrieve_student_results(student_dir: Path) -> StudentResults:
     results_file = student_dir / RESULTS_FILE_NAME
     with open(results_file, "r") as fi:
         return json.load(fi, object_hook=_json_deserialize_hook)
@@ -117,14 +117,14 @@ def eval_assignment(
     student_name: str | None,
     assignment: Assignment | None = None,
     no_git: bool = False,
-) -> Dict[str, Any] | None:
+) -> StudentResults | None:
     """
     Run automated grading tests on a single student directory.
     """
     student_dir = student_dir.resolve()
     dir_name = student_dir.name
     os.chdir(student_dir)
-    student_results: dict = {}
+    student_results: StudentResults = {}
 
     if not student_name:
         student_name = dir_name
@@ -170,7 +170,9 @@ def eval_assignment(
                 commit = commits[0]
                 if not student_name:
                     student_results["name"] = commit.author_name
-                student_results["commit_message"] = commit.message.strip() if commit.message else ""
+                student_results["commit_message"] = (
+                    commit.message.strip() if commit.message else ""
+                )
                 student_results["commiter_name"] = commit.author_name
                 commit_date = commit.date
                 student_results["commit_date"] = commit_date

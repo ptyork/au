@@ -1,3 +1,4 @@
+from typing import Any
 from pathlib import Path
 from tomlkit import loads, dumps, TOMLDocument
 from tomlkit.container import Container
@@ -28,7 +29,7 @@ class SettingsBase:
         if self.is_dirty:
             self.write()
 
-    def get(self, dotted_name: str, is_path=False) -> any:
+    def get(self, dotted_name: str, is_path=False) -> Any:
         parts = dotted_name.split('.')
         doc = self.settings_doc
         for part in parts:
@@ -43,7 +44,7 @@ class SettingsBase:
             val = path
         return val
 
-    def set(self, dotted_name: str, val: any) -> any:
+    def set(self, dotted_name: str, val: Any) -> Any:
         parts = dotted_name.split('.')
         doc = self.settings_doc
         for part in parts[:-1]:
@@ -56,15 +57,26 @@ class SettingsBase:
                 doc_path = self.settings_doc_path.resolve()
                 relative_path = val.relative_to(doc_path, walk_up=True).as_posix()
                 doc[parts[-1]] = str(relative_path)
-            except:
+            except Exception:
                 doc[parts[-1]] = str(val)
         else:
             try:
                 doc[parts[-1]] = val
-            except:
+            except Exception:
                 doc[parts[-1]] = str(val)
         self.is_dirty = True
     
+    def delete(self, dotted_name: str) -> None:
+        parts = dotted_name.split('.')
+        doc = self.settings_doc
+        for part in parts[:-1]:
+            doc = doc.get(part)
+            if not doc:
+                return
+        if parts[-1] in doc:
+            del doc[parts[-1]]
+            self.is_dirty = True
+
     @property
     def settings_doc_path(self) -> Path:
         return self._settings_doc_file.parent
@@ -84,4 +96,10 @@ class SettingsBase:
     def write(self):
         with open(self._settings_doc_file, 'wt') as fi:
             fi.write(dumps(self.settings_doc))
+        self.is_dirty = False
+
+    def remove(self):
+        if self._settings_doc_file.exists():
+            self._settings_doc_file.unlink()
+        self._settings_doc = TOMLDocument()
         self.is_dirty = False

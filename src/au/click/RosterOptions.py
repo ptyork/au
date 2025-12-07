@@ -29,7 +29,7 @@ class RosterOptions:
     def _get_settings(self, base_path):
         if base_path and (self.load or self.store):
             try:
-                return AssignmentSettings.get_classroom_settings(base_path)
+                return AssignmentSettings.get_assignment_settings(base_path)
             except:
                 if self.store:
                     if self.force_store or AssignmentSettings.is_valid_settings_path(
@@ -79,8 +79,8 @@ class RosterOptions:
                     optional = " (Press esc for none)"
                 roster_file = select_file(
                     title=f"CHOOSE ROSTER CSV FILE{optional}",
-                    root=base_path,
-                    filter="*.csv",
+                    initial_path=base_path,
+                    glob="*.csv",
                 )
                 if roster_file:
                     click.echo(f" > CHOICE: {roster_file}")

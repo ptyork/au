@@ -1,7 +1,8 @@
-from typing import List, overload
+from typing import overload
 import logging
 
 from dacite import from_dict
+from rich.console import Console
 
 from .classroom_types import (
     Classroom,
@@ -21,8 +22,8 @@ logger = logging.getLogger(__name__)
 ###############################################################################
 
 
-def get_classrooms(include_archived=False) -> List[Classroom]:
-    classrooms: List[Classroom] = []
+def get_classrooms(include_archived=False) -> list[Classroom]:
+    classrooms: list[Classroom] = []
 
     rooms_d = gh_api("classrooms")
     if not rooms_d:
@@ -39,7 +40,7 @@ def get_classrooms(include_archived=False) -> List[Classroom]:
     return classrooms
 
 
-def get_classroom(classroom_id: int) -> Classroom:
+def get_classroom(classroom_id: int) -> Classroom | None:
     room_d = gh_api(f"classrooms/{classroom_id}")
     if not room_d:
         return None
@@ -54,19 +55,20 @@ def get_classroom(classroom_id: int) -> Classroom:
 def choose_classroom(
     include_archived: bool = False,
     suppress_print: bool = False,
-    title="CHOOSE CLASSROOM",
-) -> Classroom:
+    title: str | None = "CHOOSE CLASSROOM",
+    console: Console = Console(),
+) -> Classroom | None:
     classrooms = get_classrooms(include_archived=include_archived)
     classrooms.reverse()
     choices = [c.name for c in classrooms]
     choice = select_choice(choices, title=title)
     if choice is not None:
         if not suppress_print:
-            print(" > CHOICE:", choices[choice])
+            console.print(" > CLASSROOM:", choices[choice])
         return classrooms[choice]
     else:
         if not suppress_print:
-            print(" X CHOICE: NONE")
+            console.print(" X CLASSROOM: NONE")
         return None
 
 
@@ -76,14 +78,15 @@ def choose_classroom(
 
 
 @overload
-def get_assignments(classroom: int) -> List[Assignment]: ...
+def get_assignments(classroom: int) -> list[Assignment]: ...
 
 
 @overload
-def get_assignments(classroom: Classroom) -> List[Assignment]: ...
+def get_assignments(classroom: Classroom) -> list[Assignment]: ...
 
 
-def get_assignments(classroom: Classroom | int) -> List[Assignment]:
+def get_assignments(classroom: Classroom | int) -> list[Assignment]:
+    assignments: list[Assignment] = []
     if isinstance(classroom, Classroom):
         classroom_id = classroom.id
     elif isinstance(classroom, int):
@@ -91,7 +94,7 @@ def get_assignments(classroom: Classroom | int) -> List[Assignment]:
     else:
         raise ValueError("classroom must be either int or Classroom")
 
-    assignments: List[Assignment] = []
+    assignments: list[Assignment] = []
 
     assignments_d = gh_api(f"classrooms/{classroom_id}/assignments")
     if not assignments_d:
@@ -108,18 +111,25 @@ def get_assignments(classroom: Classroom | int) -> List[Assignment]:
 
 @overload
 def choose_assignment(
-    classroom: int, suppress_print: bool = False, title="CHOOSE ASSIGNMENT"
+    classroom: int,
+    suppress_print: bool = False,
+    title: str | None = "CHOOSE ASSIGNMENT",
 ) -> Assignment: ...
 
 
 @overload
 def choose_assignment(
-    classroom: Classroom, suppress_print: bool = False, title="CHOOSE ASSIGNMENT"
+    classroom: Classroom,
+    suppress_print: bool = False,
+    title: str | None = "CHOOSE ASSIGNMENT",
 ) -> Assignment: ...
 
 
 def choose_assignment(
-    classroom: Classroom | int, suppress_print: bool = False, title="CHOOSE ASSIGNMENT"
+    classroom: Classroom | int,
+    suppress_print: bool = False,
+    title: str | None = "CHOOSE ASSIGNMENT",
+    console: Console = Console(),
 ) -> Assignment:
     if isinstance(classroom, Classroom):
         classroom_id = classroom.id
@@ -133,17 +143,17 @@ def choose_assignment(
     assignments.reverse()
     maxlen = max([len(a.title) for a in assignments])
     choices = [
-        a.title.ljust(maxlen + 2) + "Due: " + get_friendly_local_datetime(a.deadline)
+        f"{a.title.ljust(maxlen + 2)}[grey50](Due: {get_friendly_local_datetime(a.deadline)})[/grey50]"
         for a in assignments
     ]
     choice = select_choice(choices, title=title)
     if choice is not None:
         if not suppress_print:
-            print(" > CHOICE:", choices[choice])
+            console.print(" > ASSIGNMENT:", choices[choice])
         return assignments[choice]
     else:
         if not suppress_print:
-            print(" X CHOICE: NONE")
+            console.print(" X ASSIGNMENT: NONE")
         return None
 
 
@@ -165,24 +175,23 @@ def get_assignment(assignment_id: int = None) -> Assignment:
 
 
 @overload
-def get_accepted_assignments(assignment: int) -> List[AcceptedAssignment]: ...
+def get_accepted_assignments(assignment: int) -> list[AcceptedAssignment]: ...
 
 
 @overload
-def get_accepted_assignments(assignment: Assignment) -> List[AcceptedAssignment]: ...
+def get_accepted_assignments(assignment: Assignment) -> list[AcceptedAssignment]: ...
 
 
-def get_accepted_assignments(
-    accepted_assignment: Assignment,
-) -> List[AcceptedAssignment]:
-    if isinstance(accepted_assignment, Assignment):
-        assignment_id = accepted_assignment.id
-    elif isinstance(accepted_assignment, int):
-        assignment_id = accepted_assignment
+def get_accepted_assignments(assignment: Assignment | int) -> list[AcceptedAssignment]:
+    accepted_assignments: list[AcceptedAssignment] = []
+    if isinstance(assignment, Assignment):
+        assignment_id = assignment.id
+    elif isinstance(assignment, int):
+        assignment_id = assignment
     else:
         raise ValueError("assignment must be either int or Assignment")
 
-    accepted_assignments: List[AcceptedAssignment] = []
+    accepted_assignments: list[AcceptedAssignment] = []
 
     accepted_assignments_d = gh_api(f"assignments/{assignment_id}/accepted_assignments")
     if not accepted_assignments_d:

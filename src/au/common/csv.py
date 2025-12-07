@@ -1,5 +1,3 @@
-from typing import Dict
-
 import csv as csv_lib
 from io import TextIOBase, StringIO
 from pathlib import Path
@@ -14,7 +12,7 @@ def dict_from_csv(
     key_col: int | str,
     val_col: int | str,
     no_header: bool = False,
-) -> Dict[any, any]:
+) -> dict[any, any]:
     """
     Convert a CSV formatted text into a dictionary using the `key_col` column in
     the CSV as key and `val_col` for values. If duplicate key's are found in the

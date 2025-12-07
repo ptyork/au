@@ -53,7 +53,7 @@ def rename_roster(
 
         [real name]@[github id][suffix]/
 
-    \For example:
+    For example:
 
         York_Paul@ptyork/
 

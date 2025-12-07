@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Dict, overload
+from typing import overload
 
 from pathlib import Path
 from pprint import pformat
@@ -21,31 +21,31 @@ class FileType(Enum):
 
 @overload
 def label_dir(
-    pattern_dict: Dict[str, str],
+    pattern_dict: dict[str, str],
     search_dir: Path,
     file_type: FileType = FileType.FILE,
     ignore_case: bool = True,
     skip_hidden: bool = True,
-) -> Dict[str, str]: ...
+) -> dict[str, str]: ...
 
 
 @overload
 def label_dir(
-    pattern_dict: Dict[str, str],
+    pattern_dict: dict[str, str],
     search_dir: str,
     file_type: FileType = FileType.FILE,
     ignore_case: bool = True,
     skip_hidden: bool = True,
-) -> Dict[str, str]: ...
+) -> dict[str, str]: ...
 
 
 def label_dir(
-    pattern_dict: Dict[str, str],
+    pattern_dict: dict[str, str],
     search_dir: Path | str,
     file_type: FileType = FileType.FILE,
     ignore_case: bool = True,
     skip_hidden: bool = True,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Given a `pattern_dict` containing search patterns as keys and labels as
     values, return a dictionary of all files or subdirectories (sub-objects) of

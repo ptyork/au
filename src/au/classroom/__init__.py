@@ -1,5 +1,12 @@
-from .AssignmentSettings import AssignmentSettings
+from .AssignmentSettings import (
+    AssignmentSettings,
+)
 
+from .AssignmentType import (
+    AssignmentType,
+    assignment_types,
+)
+    
 from .classroom_api import (
     choose_classroom,
     get_classrooms,

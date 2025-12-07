@@ -1,4 +1,3 @@
-from typing import Dict, List
 from dataclasses import dataclass, field
 import logging
 import sys
@@ -8,7 +7,8 @@ from pprint import pformat
 import click
 from rich.console import Console
 
-from f_table import get_table, BasicScreenStyle
+from craftable import get_table
+from craftable.styles import BasicScreenStyle
 from git_wrap import GitRepo
 
 from au.classroom import Assignment, get_accepted_assignments, Roster
@@ -68,7 +68,7 @@ def time_details(
 
         status.update(status="Finding all local Git repositories")
 
-        repo_dirs: Dict[str, GitRepo] = {}
+        repo_dirs: dict[str, GitRepo] = {}
         for sub_dir in root_dir.iterdir():
             if not sub_dir.is_dir():
                 continue
@@ -93,12 +93,12 @@ def time_details(
             date: str = ""
             work_time: str = ""
             past_due: str = ""
-            commits: List[_Commit] = field(default_factory=list)
+            commits: list[_Commit] = field(default_factory=list)
 
             def add_commit(self, date, message, late):
                 self.commits.append(_Commit(date, message, late))
 
-        submissions: List[_Submission] = []
+        submissions: list[_Submission] = []
         self_email = GitRepo.get_user_email()
 
         status.update(status="Gathering time details from each repository")
@@ -124,7 +124,7 @@ def time_details(
                 # assume a student commit
                 date_str = get_friendly_local_datetime(commit.date)
                 message = commit.message.strip()
-                late = commit.date > assignment.deadline
+                late = commit.date > assignment.deadline if assignment.deadline else False
                 submission.add_commit(date_str, message, late)
                 if not last_student_commit_date:
                     last_student_commit_date = commit.date

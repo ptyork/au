@@ -1,11 +1,12 @@
-from typing import Dict
 from dataclasses import dataclass
 
-from f_table import MarkdownStyle, NoBorderScreenStyle, get_table, get_table_row
+from craftable import get_table, get_table_row
+from craftable.styles import MarkdownStyle, NoBorderScreenStyle
 
 from au.common.datetime import get_friendly_local_datetime
 
 from .pytest_data import Results
+from .types import StudentResults
 
 
 @dataclass
@@ -23,11 +24,28 @@ class Score:
 
 
 def get_student_scores(
-    student_results: Dict, scoring_params: ScoringParams = ScoringParams()
+    student_results: StudentResults, scoring_params: ScoringParams = ScoringParams()
 ) -> Score:
-    # Calculate score
+    # Calculate score (fallback to pt_pct if no test_classes)
     pt_pct = student_results.setdefault("pytest_pct", 0)
     pl_pct = student_results.setdefault("pylint_pct", 0)
+
+    test_classes = []
+    try:
+        pytest_results = Results.from_dict(student_results.get("pytest_results"))
+        test_classes = pytest_results.test_classes.values()
+    except:
+        pass
+
+    if test_classes:
+        tests_count = 0
+        correct_count = 0
+        for test_class in test_classes:
+            tests_count += len(test_class.tests)
+            correct_count += test_class.pass_count
+        if tests_count > 0:
+            pt_pct = correct_count / tests_count
+
     total_score = None
     if scoring_params:
         max = scoring_params.max_score
@@ -39,7 +57,7 @@ def get_student_scores(
 
 
 def get_summary(
-    student_results: Dict, scoring_params: ScoringParams = None, get_markdown=False
+    student_results: StudentResults, scoring_params: ScoringParams = None, get_markdown=False
 ) -> str:
     summary_values = [["Student Name", student_results["name"]]]
 

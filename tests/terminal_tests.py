@@ -3,7 +3,7 @@ if __name__ == "__main__":
 
     from au.common import select_file, select_choice, select_dir
 
-    path = select_file(filter="*.py", title="CHOOSE ROSTER")
+    path = select_file(glob="*.py", title="CHOOSE ROSTER")
     print(str(path))
 
     path = select_dir(title="CHOOSE DIR")

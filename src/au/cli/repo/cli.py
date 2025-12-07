@@ -3,6 +3,7 @@ import click
 from au.click import AliasedGroup
 
 from .create import create
+from .copy import copy
 from .recursive_git import recursive_git
 
 
@@ -13,6 +14,7 @@ def repo():
 
 
 repo.add_command(create)
+repo.add_command(copy)
 repo.add_command(recursive_git)
 
 

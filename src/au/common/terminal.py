@@ -1,10 +1,10 @@
-from typing import Iterable
+from collections.abc import Iterable
 from os import get_terminal_size, sep
 from math import ceil
 import re
 from pathlib import Path
-from beaupy import select
 
+from getrich import FileChooser, FilterChooser, ChooserStyles
 
 from .drawing import get_line, BoxChars
 
@@ -48,72 +48,59 @@ def draw_line(
 
 
 ###############################################################################
-# get_choice
+# select_choice / select_value
 ###############################################################################
 
-
-def get_choice(
+def _select(
     choices: Iterable,
-    title: str = None,
-    prompt: str = "Choose",
-    ideal_max_rows: int = 8,
-    max_term_width: int = MAX_REASONABLE_WIDTH,
-) -> int:
-    """
-    Allow a user to choose from a list of choices. Display the choices in
-    columns if the number of choices exceeds ideal_max_rows.
-    """
-    term_width = get_term_width(max_term_width)
-    ideal_col_count = ceil(len(choices) / ideal_max_rows)
-    max_len = max([len(choice) for choice in choices])
-    col_len = max_len + 6
-    max_col_count = term_width // col_len
-    col_count = min(ideal_col_count, max_col_count)
-    row_count = ceil(len(choices) / col_count)
-
-    if title:
-        draw_double_line(max_width=term_width)
-        print(title)
-        draw_single_line(max_width=term_width)
-
-    for i in range(row_count):
-        for j in range(col_count):
-            idx = i + j * row_count
-            if idx < len(choices):
-                choice_num = idx + 1
-                print(f"{choice_num:>2}. {choices[idx]}".ljust(col_len), end="")
-        print()
-    draw_single_line(max_width=term_width)
-
-    while True:
-        try:
-            choice = int(input(f"{prompt} >> "))
-            assert 0 < choice <= len(choices)
-            return choice - 1
-        except (AssertionError, ValueError):
-            print("!! INVALID CHOICE !!")
-
-
-###############################################################################
-# select_choice
-###############################################################################
-
+    title: str = '',
+    borders: bool = True,
+    max_rows: int = 10,
+    filtered: bool = False,
+) -> tuple[str, int] | tuple[None, None]:
+    styles: ChooserStyles = {
+        "show_border": borders,
+        "selection_style": "bold bright_white on grey30",
+    }
+    return FilterChooser(
+        choices=choices,
+        title_text=title,
+        height=max_rows,
+        styles=styles,
+        disable_filtering=not filtered,
+    ).run()
 
 def select_choice(
     choices: Iterable,
-    title: str = None,
-    max_rows: int = 8,
-    max_term_width: int = MAX_REASONABLE_WIDTH,
+    title: str = '',
+    borders: bool = True,
+    max_rows: int = 10,
+    filtered: bool = False,
 ) -> int | None:
-    term_width = get_term_width(max_term_width)
-
-    if title:
-        draw_double_line(max_width=term_width)
-        print(title)
-        draw_single_line(max_width=term_width)
-    return select(
-        options=choices, pagination=True, page_size=max_rows, return_index=True
+    _, idx = _select(
+        choices=choices,
+        title=title,
+        borders=borders,
+        max_rows=max_rows,
+        filtered=filtered,
     )
+    return idx
+
+def select_value(
+    choices: Iterable,
+    title: str = '',
+    borders: bool = True,
+    max_rows: int = 10,
+    filtered: bool = False,
+) -> str | None:
+    val, _ = _select(
+        choices=choices,
+        title=title,
+        borders=borders,
+        max_rows=max_rows,
+        filtered=filtered,
+    )
+    return val
 
 
 ###############################################################################
@@ -122,68 +109,30 @@ def select_choice(
 
 
 def select_file(
-    root: Path = None,
-    filter: str | Iterable[str] = "*",
-    title: str = None,
+    initial_path: Path = Path("."),
+    title: str  = "",
+    glob: str | Iterable[str] = "*",
+    exclude_hidden: bool = True,
+    exclude_dunder: bool = True,
     files_at_top: bool = True,
-    max_rows: int = 8,
-    max_term_width: int = MAX_REASONABLE_WIDTH,
+    max_rows: int = 10,
+    borders: bool = True,
 ) -> Path | None:
     """Interactive file picker."""
-    if not root:
-        root = Path.cwd().resolve()
-    term_width = get_term_width(max_term_width)
-
-    if title:
-        draw_double_line(max_width=term_width)
-        print(title)
-        draw_single_line(max_width=term_width)
-
-    path = root
-    while True:
-        options = []
-        options.append(f".{sep}\t\t({path})")
-        sel_start = 1
-        if path.parent and path.parent != path:
-            options.append(f"..{sep}\t\t({path.parent})")
-            sel_start = 2
-        if isinstance(filter, str):
-            files = [file.name for file in path.glob(filter) if file.is_file()]
-        else:
-            files = []
-            for pattern in filter:
-                files += [file.name for file in path.glob(pattern) if file.is_file()]
-        dirs = [file.name + sep for file in path.iterdir() if file.is_dir()]
-        files.sort(key=str.casefold)
-        dirs.sort(key=str.casefold)
-        all = files + dirs
-        if not all:
-            sel_start -= 1
-        if not files_at_top:
-            all.sort(key=str.casefold)
-        options.extend(all)
-
-        if not max_rows or max_rows < 3:
-            pagination = False
-            max_rows = 1  # beaupy blows up if < 1
-        else:
-            pagination = True
-
-        sel = select(
-            options=options,
-            cursor_index=sel_start,
-            pagination=pagination,
-            page_size=max_rows,
-        )
-
-        if not sel:
-            path = None
-            break
-        sel = sel.split(sep)[0]
-        path = (path / sel).resolve()
-        if path.is_file():
-            break
-    return path
+    styles: ChooserStyles = {
+        "show_border": False,
+        "selection_style": "bold bright_white on grey30",
+    }
+    return FileChooser(
+        initial_path=initial_path,
+        files_at_top=files_at_top,
+        exclude_hidden=exclude_hidden,
+        exclude_dunder=exclude_dunder,
+        glob=glob,
+        title_text=title,
+        height=max_rows,
+        styles=styles,
+    ).run()
 
 
 ###############################################################################
@@ -192,24 +141,34 @@ def select_file(
 
 
 def select_dir(
-    root: Path = None,
-    title: str = None,
+    initial_path: Path = Path("."),
+    title: str = "",
     exclude_hidden: bool = True,
     exclude_dunder: bool = True,
-    max_rows: int = 8,
-    max_term_width: int = MAX_REASONABLE_WIDTH,
+    max_rows: int = 10,
+    borders: bool = True,
 ) -> Path | None:
     """Interactive directory picker."""
-    if not root:
-        root = Path.cwd().resolve()
-    term_width = get_term_width(max_term_width)
+    styles: ChooserStyles = {
+        "show_border": borders,
+        "selection_style": "bold bright_white on grey30",
+    }
+    return FileChooser(
+        initial_path=initial_path,
+        choose_dirs=True,
+        exclude_hidden=exclude_hidden,
+        exclude_dunder=exclude_dunder,
+        title_text=title,
+        height=max_rows,
+        styles=styles,
+    ).run()
 
-    if title:
-        draw_double_line(max_width=term_width)
-        print(title)
-        draw_single_line(max_width=term_width)
+    if initial_path:
+        initial_path = initial_path.resolve()
+    else:
+        initial_path = Path.cwd().resolve()
 
-    path = root
+    path = initial_path
     while True:
         options = []
         options.append(f"CHOOSE {path}")
@@ -238,6 +197,12 @@ def select_dir(
             pagination=pagination,
             page_size=max_rows,
             return_index=True,
+            title=title,
+            instructions='\n\n[gray70 italic]↑ or ↓ to choose | enter to select | esc to cancel[/gray70 italic]',
+            borders=borders,
+            cursor_style="bold bright_white",
+            selected_style="bold bright_white on grey30",
+            selected_fill=True,
         )
 
         if sel == None:
